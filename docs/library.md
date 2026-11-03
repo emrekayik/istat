@@ -87,6 +87,19 @@ linearRegression(x, y).predict(5);   // 11
 polynomialRegression(x, y, 1).r2;   // 1
 ```
 
+## Data import
+
+The `io` namespace and flat exports provide `readData`, `readCsv`, `readXlsx`, `readJson`, and `column`. Relative paths are resolved from `process.cwd()`. `readData` infers CSV, XLSX/XLS, or JSON from the file extension. CSV and spreadsheet readers return row records by default, using the first row as headers; pass `false` for the `header` argument to get arrays instead. `readXlsx` accepts an optional worksheet name or zero-based index (default: first sheet). `column(rows, key)` extracts a record field by name or an array-row column by 1-based numeric index.
+
+```ts
+import { column, mean, readData } from "./src/istat";
+
+const rows = readData("examples/measurements.csv");
+mean(column(rows, "score") as number[]); // 15.65
+```
+
+`readJson(path)` returns the parsed JSON value. File access, unsupported extensions, invalid JSON, and missing columns throw errors.
+
 ## Streaming
 
 `MeanAccumulator` and `VarianceAccumulator` update statistics as values arrive. Both expose `add(value)` and `count`; the `add` method is chainable. `MeanAccumulator.mean` is `NaN` before any values are added.

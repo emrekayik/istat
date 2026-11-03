@@ -23,6 +23,7 @@
   "dependencies": {
     "@bunli/core": "^0.9.1",
     "peggy": "^5.1.1",
-    "picocolors": "^1.1.1"
+    "picocolors": "^1.1.1",
+    "xlsx": "^0.18.5"
   }
 }

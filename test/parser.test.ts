@@ -116,6 +116,22 @@ describe("iStat Language - Parser & Evaluator (MATLAB/Octave Syntax)", () => {
     expect(env.get("pred")).toBeCloseTo(15, 6);
   });
 
+  it("reads data files from language scripts and analyzes columns", () => {
+    const env = createEnvironment();
+    evaluate(
+      `
+        rows = readData("examples/measurements.csv");
+        scores = column(rows, "score");
+        average = mean(scores);
+      `,
+      env
+    );
+
+    expect(env.get("rows")).toHaveLength(4);
+    expect(env.get("scores")).toEqual([12.5, 16.2, 14.8, 19.1]);
+    expect(env.get("average")).toBeCloseTo(15.65);
+  });
+
   it("handles comments and semicolon output suppression", () => {
     const env = createEnvironment();
     const code = `

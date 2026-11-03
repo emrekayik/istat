@@ -5,22 +5,18 @@ import pc from "picocolors";
 
 export default defineCommand({
   name: "repl",
-  description: "Starts the interactive MATLAB/Octave-like iStat REPL environment",
+  description: "Starts the interactive statistical language iStat REPL environment",
   handler: () => {
     const env = createEnvironment();
 
     const rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
-      prompt: pc.bold(pc.green("iStat> ")),
+      prompt: `${pc.bold(pc.cyan("istat"))} ${pc.magenta("❯")} `,
+      historySize: 1000,
     });
 
-    console.log(
-      pc.bold(pc.cyan("✨ iStat Interactive Statistics Environment (MATLAB/Octave Syntax)"))
-    );
-    console.log(
-      pc.gray('Type "help" for a list of functions, "whos" to see variables, or "exit" to quit.\n')
-    );
+    printBanner();
     rl.prompt();
 
     rl.on("line", (line) => {
@@ -94,26 +90,37 @@ function formatSummary(val: any): string {
 }
 
 function printHelp(): void {
-  console.log(pc.bold(pc.cyan("\n📖 iStat Commands & Syntax Guide:")));
-  console.log(`
-  ${pc.bold("Commands:")}
-    ${pc.green("whos / who")}     List all variables currently defined
-    ${pc.green("clear")}          Clear all user variables
-    ${pc.green("help")}           Show this help message
-    ${pc.green("exit / quit")}    Quit the REPL
+  const heading = (title: string) => console.log(`\n${pc.bold(pc.cyan(`◆ ${title}`))}`);
 
-  ${pc.bold("Syntax & Arrays:")}
-    x = [1, 2, 3, 4, 5]     Define vector
-    x = 1:2:9               Range (start:step:stop) -> [1, 3, 5, 7, 9]
-    A = [1 2; 3 4]          2D Matrix
-    x(1) or x[1]            1-based indexing (x(1) = first element)
-    x = 10;                 Trailing semicolon suppresses output
+  console.log(`\n${pc.bold(pc.magenta("  iStat field guide"))} ${pc.dim("· quick reference")}`);
+  heading("Session");
+  console.log(`  ${pc.green("who")} / ${pc.green("whos")} / ${pc.green("vars")}  ${pc.dim("List variables")}`);
+  console.log(`  ${pc.green("clear")}                 ${pc.dim("Clear session variables")}`);
+  console.log(`  ${pc.green("help")} / ${pc.green("?")}            ${pc.dim("Show this guide")}`);
+  console.log(`  ${pc.green("exit")} / ${pc.green("quit")}         ${pc.dim("Leave iStat")}`);
 
-  ${pc.bold("Statistics Functions (istat):")}
-    ${pc.yellow("Descriptive:")}  mean(x), median(x), std(x), var(x), quantile(x, 0.5), summary(x)
-    ${pc.yellow("Correlation:")}  corr(x, y), cov(x, y), spearman(x, y)
-    ${pc.yellow("Regression:")}   linreg(x, y), polyfit(x, y, degree)
-    ${pc.yellow("Charts:")}       plotHist(x, bins, title), scatter(x, y, title), saveSvg(path, svg)
-    ${pc.yellow("Math:")}         sum(x), min(x), max(x), length(x), zeros(n), ones(n), sqrt(x), abs(x)
-`);
+  heading("Language");
+  console.log(`  ${pc.yellow("x = 1:2:9")}              ${pc.dim("Create a range")}`);
+  console.log(`  ${pc.yellow("A = [1 2; 3 4]")}        ${pc.dim("Create a matrix")}`);
+  console.log(`  ${pc.yellow("A * B")}  ${pc.dim("matrix product")}   ${pc.yellow("A .* B")}  ${pc.dim("element-wise")}`);
+  console.log(`  ${pc.yellow("function y = f(x)")}     ${pc.dim("Define a reusable function")}`);
+  console.log(`  ${pc.yellow("x = 10;")}                ${pc.dim("Semicolon hides output")}`);
+
+  heading("Math & analysis");
+  console.log(`  ${pc.yellow("Stats")}     mean, median, std, var, quantile, summary, mode, zscore`);
+  console.log(`  ${pc.yellow("Models")}    corr, spearman, linreg, polyfit`);
+  console.log(`  ${pc.yellow("Matrices")}  transpose, matmul, dot, det, inv, solve`);
+  console.log(`  ${pc.yellow("Chance")}    normalCdf, binomialPmf, poissonPmf, uniformCdf`);
+  console.log(`  ${pc.yellow("Plots")}     plotHist, scatter, saveSvg`);
+  console.log(`\n${pc.dim("Tip: ↑/↓ browses command history. Try")} ${pc.cyan("summary([2, 4, 4, 8])")}${pc.dim(".")}\n`);
+}
+
+function printBanner(): void {
+  const border = pc.cyan("  ╭──────────────────────────────────────────────────────╮");
+  console.log(`\n${border}`);
+  console.log(`  ${pc.cyan("│")}  ${pc.bold(pc.magenta("iStat"))} ${pc.dim("·")} ${pc.bold("Interactive Statistics Lab")}                 ${pc.cyan("│")}`);
+  console.log(`  ${pc.cyan("│")}  ${pc.dim("Explore data. Calculate boldly. Stay curious.")}       ${pc.cyan("│")}`);
+  console.log(`  ${pc.cyan("├──────────────────────────────────────────────────────┤")}`);
+  console.log(`  ${pc.cyan("│")}  ${pc.green("↑/↓")} history   ${pc.yellow("help")} guide   ${pc.red("exit")} quit                 ${pc.cyan("│")}`);
+  console.log(`  ${pc.cyan("╰──────────────────────────────────────────────────────╯")}\n`);
 }

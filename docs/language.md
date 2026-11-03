@@ -114,6 +114,18 @@ For matrix operands, `*` performs matrix multiplication (including dot product f
 
 The normal distribution functions accept optional `mean` and standard deviation (`sd`) parameters. Binomial functions use `(k, trials, probability)`, Poisson functions use `(k, rate)`, and uniform functions accept optional lower and upper bounds.
 
+## Importing data files
+
+`readData(path)` detects the format from the extension and reads CSV, XLSX/XLS, or JSON. Relative paths are resolved from the directory where iStat is run. CSV and spreadsheet files use the first row as column headers by default and return an array of records:
+
+```matlab
+rows = readData("measurements.csv");
+scores = column(rows, "score");
+mean(scores)
+```
+
+Use `readCsv(path, header)` or `readXlsx(path, sheet, header)` to specify whether the first row contains headers. For XLSX files, `readXlsx` and `readData` accept a worksheet name or zero-based position as the `sheet` argument; it defaults to the first worksheet. `readJson(path)` returns the parsed JSON value. `column(rows, key)` extracts a named field from records or a column from array rows (numeric keys are 1-based). File and parse errors are reported to the caller.
+
 The constants `pi`, `e`, `inf`/`Inf`, and `nan`/`NaN` are available. For function parameters, options, and return types, see the [TypeScript library reference](library.md).
 
 ## Interpreter API

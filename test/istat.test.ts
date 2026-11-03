@@ -1,4 +1,8 @@
 import { describe, expect, it } from "bun:test";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import * as XLSX from "xlsx";
 import {
   mean,
   median,
@@ -40,6 +44,11 @@ import {
   poissonCdf,
   uniformPdf,
   uniformCdf,
+  readData,
+  readCsv,
+  readXlsx,
+  readJson,
+  column,
 } from "../src/istat";
 
 describe("istat - Descriptive Statistics", () => {
@@ -148,6 +157,69 @@ describe("istat - Probability Distributions", () => {
     expect(binomialCdf(2, 5, 0.5)).toBeCloseTo(0.5);
     expect(poissonPmf(2, 3)).toBeCloseTo(0.2240418077, 9);
     expect(poissonCdf(2, 3)).toBeCloseTo(0.4231900811, 9);
+  });
+});
+
+describe("istat - Data Import", () => {
+  it("reads CSV records and extracts columns", () => {
+    const dir = mkdtempSync(join(tmpdir(), "istat-data-"));
+    try {
+      const path = join(dir, "measurements.csv");
+      writeFileSync(path, 'name,value,note\nalpha,2,"first, sample"\nbeta,4,"say ""hi"""\n');
+
+      const rows = readCsv(path) as Record<string, unknown>[];
+      expect(rows).toEqual([
+        { name: "alpha", value: 2, note: "first, sample" },
+        { name: "beta", value: 4, note: 'say "hi"' },
+      ]);
+      expect(column(rows, "value")).toEqual([2, 4]);
+      expect(readCsv(path, false)).toEqual([
+        ["name", "value", "note"],
+        ["alpha", 2, "first, sample"],
+        ["beta", 4, 'say "hi"'],
+      ]);
+      expect(readData(path)).toEqual(rows);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("reads JSON and XLSX files, including worksheet selection", () => {
+    const dir = mkdtempSync(join(tmpdir(), "istat-data-"));
+    try {
+      const jsonPath = join(dir, "records.json");
+      const xlsxPath = join(dir, "records.xlsx");
+      writeFileSync(jsonPath, JSON.stringify([{ name: "Ada", score: 9 }]));
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(
+        workbook,
+        XLSX.utils.aoa_to_sheet([["name", "score"], ["Ada", 9]]),
+        "Scores"
+      );
+      XLSX.utils.book_append_sheet(
+        workbook,
+        XLSX.utils.aoa_to_sheet([["name", "score"], ["Lin", 10]]),
+        "Other"
+      );
+      XLSX.writeFile(workbook, xlsxPath);
+
+      expect(readJson(jsonPath)).toEqual([{ name: "Ada", score: 9 }]);
+      expect(readData(jsonPath)).toEqual([{ name: "Ada", score: 9 }]);
+      expect(readXlsx(xlsxPath, "Other")).toEqual([{ name: "Lin", score: 10 }]);
+      expect(column(readXlsx(xlsxPath), "score")).toEqual([9]);
+      expect(readXlsx(xlsxPath, 0, false)).toEqual([
+        ["name", "score"],
+        ["Ada", 9],
+      ]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects unsupported extensions and missing columns", () => {
+    expect(() => readData("unknown.parquet")).toThrow("unsupported file type");
+    expect(() => column([{ value: 1 }], "missing")).toThrow("column 'missing' not found");
   });
 });
 

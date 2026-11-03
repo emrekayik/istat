@@ -32,6 +32,8 @@ Run a script file:
 bun run istat run -f examples/analysis.istat
 ```
 
+Import a CSV, XLSX, or JSON file in a script with `readData(path)`. For example, `rows = readData("examples/measurements.csv"); scores = column(rows, "score"); mean(scores)` reads a CSV using its first row as headers.
+
 The `eval` command also supports `--json` for machine-readable output. `eval` and `run` support `--svg <path>` to save an SVG chart returned by the last statement. See the [CLI guide](docs/cli.md) and [language reference](docs/language.md) for command options and syntax.
 
 ## Use the TypeScript library

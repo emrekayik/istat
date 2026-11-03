@@ -115,6 +115,23 @@ export class Environment {
       istat.quantile(toArray(data), Number(p), { method: method as any })
     );
     this.registerFunction("summary", (data) => istat.summary(toArray(data)));
+    this.registerFunction("readData", (path, sheet) =>
+      istat.readData(String(path), sheet === undefined ? {} : { sheet: sheet as string | number })
+    );
+    this.registerFunction("readCsv", (path, header = true) =>
+      istat.readCsv(String(path), Boolean(header))
+    );
+    this.registerFunction("readXlsx", (path, sheet, header = true) =>
+      istat.readXlsx(
+        String(path),
+        sheet === undefined ? undefined : (sheet as string | number),
+        Boolean(header)
+      )
+    );
+    this.registerFunction("readJson", (path) => istat.readJson(String(path)));
+    this.registerFunction("column", (rows, key) =>
+      istat.column(rows, key as string | number)
+    );
     this.registerFunction("mode", (data) => istat.mode(toArray(data)));
     this.registerFunction("skewness", (data) => istat.skewness(toArray(data)));
     this.registerFunction("kurtosis", (data) => istat.kurtosis(toArray(data)));
