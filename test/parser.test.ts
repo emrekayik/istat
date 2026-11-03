@@ -248,6 +248,60 @@ describe("iStat Language - Parser & Evaluator (MATLAB/Octave Syntax)", () => {
     expect(env.get("count")).toBe(3);
   });
 
+  it("keeps break local to the innermost loop and iterates huge ranges lazily", () => {
+    const env = createEnvironment();
+    evaluate(
+      `
+        total = 0;
+        for outer = 1:3
+          for inner = 1:1000000000000
+            total = total + outer * 10 + inner;
+            break;
+          end
+          total = total + 1;
+        end
+        for value = 1:1000000000000
+          firstValues = [value];
+          if value == 3
+            break;
+          end
+        end
+      `,
+      env
+    );
+
+    expect(env.get("total")).toBe(66);
+    expect(env.get("firstValues")).toEqual([3]);
+  });
+
+  it("keeps function variables and loop variables local to each call", () => {
+    const env = createEnvironment();
+    evaluate(
+      `
+        value = 10;
+        result = isolated(3);
+        function output = isolated(value)
+          value = value + 1;
+          for localIndex = 1:2
+            output = value + localIndex;
+          end
+        end
+      `,
+      env
+    );
+
+    expect(env.get("value")).toBe(10);
+    expect(env.get("result")).toBe(6);
+    expect(env.has("localIndex")).toBe(false);
+  });
+
+  it("rejects break and continue outside loops with clear errors", () => {
+    expect(() => evaluate("break")).toThrow("'break' can only be used inside a loop");
+    expect(() => evaluate("continue")).toThrow(
+      "'continue' can only be used inside a loop"
+    );
+  });
+
   it("defines functions with local variables and calls them before declaration", () => {
     const env = createEnvironment();
     evaluate(

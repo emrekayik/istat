@@ -341,6 +341,33 @@ function isTruthy(val: any): boolean {
   return Boolean(val);
 }
 
+function* iterateRange(node: RangeExpression, env: Environment): Generator<number> {
+  const start = Number(evalExpr(node.start, env));
+  const end = Number(evalExpr(node.end, env));
+  const step = node.step
+    ? Number(evalExpr(node.step, env))
+    : start <= end
+      ? 1
+      : -1;
+
+  if (!Number.isFinite(start) || !Number.isFinite(end) || !Number.isFinite(step)) {
+    throw new RangeError("Range bounds and step must be finite numbers");
+  }
+  if (step === 0) throw new RangeError("Range step cannot be 0");
+
+  const epsilon = Math.abs(step) * 1e-9;
+  for (
+    let value = start;
+    step > 0 ? value <= end + epsilon : value >= end - epsilon;
+    value += step
+  ) {
+    yield Number(value.toFixed(10));
+    if (value + step === value) {
+      throw new RangeError(`Range step ${step} is too small to advance from ${value}`);
+    }
+  }
+}
+
 function toArray(data: any): number[] {
   if (Array.isArray(data)) {
     return data.map((v) => Number(v));
@@ -354,6 +381,7 @@ function toArray(data: any): number[] {
 export function evaluate(program: Program, env = new Environment()): ExecutionResult {
   let lastValue: any = undefined;
   const outputs: { name?: string; value: any; formatted: string }[] = [];
+  let loopDepth = 0;
 
   for (const stmt of program.body) {
     if (stmt.type !== "FunctionDeclaration") continue;
@@ -401,8 +429,10 @@ export function evaluate(program: Program, env = new Environment()): ExecutionRe
   function executeStatement(stmt: Statement): any {
     switch (stmt.type) {
       case "BreakStatement":
+        if (loopDepth === 0) throw new SyntaxError("'break' can only be used inside a loop");
         throw new BreakSignal();
       case "ContinueStatement":
+        if (loopDepth === 0) throw new SyntaxError("'continue' can only be used inside a loop");
         throw new ContinueSignal();
 
       case "AssignmentStatement": {
@@ -442,32 +472,41 @@ export function evaluate(program: Program, env = new Environment()): ExecutionRe
       }
 
       case "ForStatement": {
-        const iterable = evalExpr(stmt.iterable, env);
-        let items: any[];
-        if (Array.isArray(iterable)) {
-          items = iterable;
-        } else if (typeof iterable === "number") {
+        const iterable =
+          stmt.iterable.type === "RangeExpression"
+            ? iterateRange(stmt.iterable, env)
+            : evalExpr(stmt.iterable, env);
+        let items: Iterable<any>;
+        if (typeof iterable === "number") {
           items = [iterable];
-        } else if (iterable && typeof iterable[Symbol.iterator] === "function") {
-          items = Array.from(iterable);
+        } else if (
+          iterable !== null &&
+          iterable !== undefined &&
+          typeof iterable[Symbol.iterator] === "function"
+        ) {
+          items = iterable;
         } else {
           throw new TypeError(`Cannot iterate over ${typeof iterable}`);
         }
-
         let loopVal: any = undefined;
-        for (const item of items) {
-          env.set(stmt.variable, item);
-          try {
-            loopVal = executeStatementList(stmt.body);
-          } catch (e) {
-            if (e instanceof BreakSignal) {
-              break;
-            } else if (e instanceof ContinueSignal) {
-              continue;
-            } else {
-              throw e;
+        loopDepth++;
+        try {
+          for (const item of items) {
+            env.set(stmt.variable, item);
+            try {
+              loopVal = executeStatementList(stmt.body);
+            } catch (e) {
+              if (e instanceof BreakSignal) {
+                break;
+              } else if (e instanceof ContinueSignal) {
+                continue;
+              } else {
+                throw e;
+              }
             }
           }
+        } finally {
+          loopDepth--;
         }
         return loopVal;
       }
@@ -477,21 +516,26 @@ export function evaluate(program: Program, env = new Environment()): ExecutionRe
         let iterations = 0;
         const maxIterations = 1_000_000;
 
-        while (isTruthy(evalExpr(stmt.test, env))) {
-          if (++iterations > maxIterations) {
-            throw new RangeError("Maximum loop iterations (1,000,000) exceeded");
-          }
-          try {
-            loopVal = executeStatementList(stmt.body);
-          } catch (e) {
-            if (e instanceof BreakSignal) {
-              break;
-            } else if (e instanceof ContinueSignal) {
-              continue;
-            } else {
-              throw e;
+        loopDepth++;
+        try {
+          while (isTruthy(evalExpr(stmt.test, env))) {
+            if (++iterations > maxIterations) {
+              throw new RangeError("Maximum loop iterations (1,000,000) exceeded");
+            }
+            try {
+              loopVal = executeStatementList(stmt.body);
+            } catch (e) {
+              if (e instanceof BreakSignal) {
+                break;
+              } else if (e instanceof ContinueSignal) {
+                continue;
+              } else {
+                throw e;
+              }
             }
           }
+        } finally {
+          loopDepth--;
         }
         return loopVal;
       }
@@ -538,22 +582,7 @@ function evaluateExpression(node: Expression, env: Environment): any {
       return env.get(node.name);
 
     case "RangeExpression": {
-      const start = Number(evalExpr(node.start, env));
-      const end = Number(evalExpr(node.end, env));
-      let step = node.step ? Number(evalExpr(node.step, env)) : start <= end ? 1 : -1;
-
-      if (step === 0) throw new RangeError("Range step cannot be 0");
-      const range: number[] = [];
-      if (step > 0) {
-        for (let v = start; v <= end + step * 1e-9; v += step) {
-          range.push(Number(v.toFixed(10)));
-        }
-      } else {
-        for (let v = start; v >= end - Math.abs(step) * 1e-9; v += step) {
-          range.push(Number(v.toFixed(10)));
-        }
-      }
-      return range;
+      return [...iterateRange(node, env)];
     }
 
     case "ArrayLiteral": {

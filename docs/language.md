@@ -71,7 +71,7 @@ else
 end
 ```
 
-`for` and `while` loops are supported, along with `break` and `continue`:
+`for` and `while` loops are supported, along with `break` and `continue`. In nested loops, either statement affects only the innermost loop. A `for` loop iterates over ranges lazily, so a large range does not need to be allocated as an array; use `break` to stop early:
 
 ```matlab
 total = 0;
@@ -79,6 +79,8 @@ for i = 1:5
   total = total + i;
 end
 ```
+
+`break` and `continue` outside a loop produce a clear runtime error. Loops share the surrounding script or function scope; function calls get isolated local variables, including their loop variables.
 
 ## User-defined functions
 
