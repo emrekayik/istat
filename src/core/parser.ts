@@ -20,7 +20,27 @@ export const parser = peggy.generate(grammarContent);
  * Parses source code written in the MATLAB/Octave-like iStat language into an AST.
  */
 export function parse(input: string): Program {
-  return parser.parse(input) as Program;
+  try {
+    return parser.parse(input) as Program;
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      "location" in error &&
+      error.location &&
+      typeof error.location === "object"
+    ) {
+      const location = error.location as {
+        start?: { line?: number; column?: number };
+      };
+      const { line, column } = location.start ?? {};
+      if (line !== undefined && column !== undefined) {
+        const sourceLine = input.split(/\r?\n/)[line - 1] ?? "";
+        const caret = `${" ".repeat(Math.max(column - 1, 0))}^`;
+        error.message = `${error.message} (line ${line}, column ${column})\n${sourceLine}\n${caret}`;
+      }
+    }
+    throw error;
+  }
 }
 
 /**

@@ -159,7 +159,17 @@ BlockDelimiter
 // --- Expressions Precedence Hierarchy ---
 
 Expression
-  = LogicalOr
+  = expression:LogicalOr {
+      const span = location();
+      return {
+        ...expression,
+        location: {
+          start: span.start,
+          end: span.end,
+          text: text()
+        }
+      };
+    }
 
 LogicalOr
   = head:LogicalAnd tail:(_ op:("||" / "|") _ right:LogicalAnd)* {

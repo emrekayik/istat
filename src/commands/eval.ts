@@ -71,7 +71,8 @@ export default defineCommand({
         );
       }
     } catch (error: any) {
-      console.error(`\n${pc.bold(pc.red("❌ Execution Error:"))}`);
+      const heading = error.location ? "❌ Syntax Error:" : "❌ Execution Error:";
+      console.error(`\n${pc.bold(pc.red(heading))}`);
       console.error(pc.red(error.message));
       process.exit(1);
     }

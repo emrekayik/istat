@@ -70,11 +70,6 @@ export default defineCommand({
       } else if (error.message?.includes("Expected") || error.location) {
         console.error(`\n${pc.bold(pc.red("❌ Syntax Error in script:"))}`);
         console.error(pc.red(error.message));
-        if (error.location) {
-          console.error(
-            pc.gray(`Line ${error.location.start.line}, column ${error.location.start.column}`)
-          );
-        }
       } else {
         console.error(
           `\n${pc.bold(pc.red("❌ Runtime Error:"))}`,

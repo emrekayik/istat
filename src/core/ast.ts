@@ -9,6 +9,18 @@ export interface Program {
   body: Statement[];
 }
 
+export interface SourcePosition {
+  offset: number;
+  line: number;
+  column: number;
+}
+
+export interface SourceSpan {
+  start: SourcePosition;
+  end: SourcePosition;
+  text: string;
+}
+
 export type Statement =
   | AssignmentStatement
   | ExpressionStatement
@@ -68,7 +80,7 @@ export interface ContinueStatement {
   type: "ContinueStatement";
 }
 
-export type Expression =
+export type Expression = (
   | BinaryExpression
   | UnaryExpression
   | RangeExpression
@@ -79,7 +91,8 @@ export type Expression =
   | StringLiteral
   | BooleanLiteral
   | IndexExpression
-  | PropertyAccess;
+  | PropertyAccess
+) & { location?: SourceSpan };
 
 export interface BinaryExpression {
   type: "BinaryExpression";

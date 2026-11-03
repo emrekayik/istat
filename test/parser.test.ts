@@ -29,6 +29,22 @@ describe("iStat Language - Parser & Evaluator (MATLAB/Octave Syntax)", () => {
     expect(env.get("val")).toBe(3); // MATLAB 1-based indexing
   });
 
+  it("reports source positions and expressions for parse and indexing errors", () => {
+    expect(() => evaluate("value = 1;\nif value >\nend")).toThrow(
+      /line 2, column \d+\)\nif value >\n\s*\^/
+    );
+
+    expect(() => evaluate("values = [10, 20];\nanswer = values(3);")).toThrow(
+      /Index 3 out of bounds \(valid range: 1-2\) in expression 'values\(3\)' \(line 2, column 10\)/
+    );
+    expect(() => evaluate("values = [10, 20]; values(1.5);")).toThrow(
+      /Invalid index 1\.5: indices must be positive integers.*expression 'values\(1\.5\)'/
+    );
+    expect(() => evaluate("if missing > 0\nend")).toThrow(
+      /Undefined variable or function 'missing' in expression 'missing > 0' \(line 1, column 4\)/
+    );
+  });
+
   it("performs vectorized element-wise operations", () => {
     const env = createEnvironment();
     evaluate("x = [1, 2, 3]; y = x .* 2 + 10;", env);

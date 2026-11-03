@@ -506,6 +506,27 @@ export function evaluate(program: Program, env = new Environment()): ExecutionRe
 }
 
 function evalExpr(node: Expression, env: Environment): any {
+  try {
+    return evaluateExpression(node, env);
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      node.location &&
+      !("sourceLocation" in error)
+    ) {
+      const { start, text } = node.location;
+      const snippet = text.replace(/\s+/g, " ").trim();
+      error.message = `${error.message} in expression '${snippet}' (line ${start.line}, column ${start.column})`;
+      Object.defineProperty(error, "sourceLocation", {
+        value: node.location,
+        configurable: true,
+      });
+    }
+    throw error;
+  }
+}
+
+function evaluateExpression(node: Expression, env: Environment): any {
   switch (node.type) {
     case "NumberLiteral":
       return node.value;
@@ -594,17 +615,26 @@ function evalExpr(node: Expression, env: Environment): any {
         if (Array.isArray(target)) {
           if (node.args.length === 1) {
             const idx = Number(evalExpr(node.args[0]!, env));
+            validateIndex(idx);
             const val = target[idx - 1];
-            if (val === undefined) throw new RangeError(`Index ${idx} out of bounds`);
+            if (val === undefined) {
+              throw new RangeError(`Index ${idx} out of bounds (valid range: 1-${target.length})`);
+            }
             return val;
           }
           if (node.args.length === 2) {
             const r = Number(evalExpr(node.args[0]!, env));
             const c = Number(evalExpr(node.args[1]!, env));
+            validateIndex(r);
+            validateIndex(c);
             const row = target[r - 1];
-            if (!Array.isArray(row)) throw new RangeError(`Row index ${r} out of bounds`);
+            if (!Array.isArray(row)) {
+              throw new RangeError(`Row index ${r} out of bounds (valid range: 1-${target.length})`);
+            }
             const val = row[c - 1];
-            if (val === undefined) throw new RangeError(`Column index ${c} out of bounds`);
+            if (val === undefined) {
+              throw new RangeError(`Column index ${c} out of bounds (valid range: 1-${row.length})`);
+            }
             return val;
           }
         }
@@ -627,18 +657,27 @@ function evalExpr(node: Expression, env: Environment): any {
       }
       if (node.index.length === 1) {
         const idx = Number(evalExpr(node.index[0]!, env));
+        validateIndex(idx);
         // 1-based indexing for MATLAB compatibility
         const val = obj[idx - 1];
-        if (val === undefined) throw new RangeError(`Index ${idx} out of bounds`);
+        if (val === undefined) {
+          throw new RangeError(`Index ${idx} out of bounds (valid range: 1-${obj.length})`);
+        }
         return val;
       }
       if (node.index.length === 2) {
         const r = Number(evalExpr(node.index[0]!, env));
         const c = Number(evalExpr(node.index[1]!, env));
+        validateIndex(r);
+        validateIndex(c);
         const row = obj[r - 1];
-        if (!Array.isArray(row)) throw new RangeError(`Row index ${r} out of bounds`);
+        if (!Array.isArray(row)) {
+          throw new RangeError(`Row index ${r} out of bounds (valid range: 1-${obj.length})`);
+        }
         const val = row[c - 1];
-        if (val === undefined) throw new RangeError(`Column index ${c} out of bounds`);
+        if (val === undefined) {
+          throw new RangeError(`Column index ${c} out of bounds (valid range: 1-${row.length})`);
+        }
         return val;
       }
       throw new Error("Multi-dimensional indexing beyond 2D is not supported");
@@ -654,6 +693,14 @@ function evalExpr(node: Expression, env: Environment): any {
 
     default:
       throw new Error(`Unknown node type: ${(node as any).type}`);
+  }
+}
+
+function validateIndex(index: number): void {
+  if (!Number.isInteger(index) || index < 1) {
+    throw new RangeError(
+      `Invalid index ${index}: indices must be positive integers (iStat uses 1-based indexing)`
+    );
   }
 }
 
