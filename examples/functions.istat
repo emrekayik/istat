@@ -1,0 +1,6 @@
+values = 1:5;
+centered = center(values)
+
+function result = center(data)
+  result = data - mean(data);
+end

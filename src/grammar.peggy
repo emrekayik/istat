@@ -16,12 +16,21 @@
 }
 
 Program
-  = __ stmts:StatementList? __ {
+  = __ stmts:TopLevelStatementList? __ {
       return {
         type: "Program",
         body: stmts || []
       };
     }
+
+TopLevelStatementList
+  = head:TopLevelStatement tail:(StatementSeparator s:TopLevelStatement { return s; })* StatementSeparator? {
+      return [head, ...tail];
+    }
+
+TopLevelStatement
+  = FunctionDeclaration
+  / Statement
 
 StatementList
   = head:Statement tail:(StatementSeparator s:Statement { return s; })* StatementSeparator? {
@@ -38,6 +47,22 @@ Statement
   / BreakStatement
   / ContinueStatement
   / SimpleStatement
+
+FunctionDeclaration
+  = "function" __ output:Identifier _ "=" _ name:Identifier _ "(" __ parameters:FunctionParameters? __ ")" BlockDelimiter body:StatementList? __ ("endfunction" / "end") _ ";"? {
+      return {
+        type: "FunctionDeclaration",
+        output: output.name,
+        name: name.name,
+        parameters: parameters || [],
+        body: body || []
+      };
+    }
+
+FunctionParameters
+  = head:Identifier tail:(_ "," _ parameter:Identifier { return parameter.name; })* {
+      return [head.name, ...tail];
+    }
 
 SimpleStatement
   = stmt:(Assignment / ExpressionStatementWrapper) suppress:(";" { return true; })? {
@@ -342,6 +367,8 @@ Keyword
     / "if"
     / "for"
     / "while"
+    / "function"
+    / "endfunction"
     / "break"
     / "continue"
     ) ![a-zA-Z0-9_]

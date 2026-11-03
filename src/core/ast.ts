@@ -15,6 +15,7 @@ export type Statement =
   | IfStatement
   | ForStatement
   | WhileStatement
+  | FunctionDeclaration
   | BreakStatement
   | ContinueStatement;
 
@@ -48,6 +49,14 @@ export interface ForStatement {
 export interface WhileStatement {
   type: "WhileStatement";
   test: Expression;
+  body: Statement[];
+}
+
+export interface FunctionDeclaration {
+  type: "FunctionDeclaration";
+  output: string;
+  name: string;
+  parameters: string[];
   body: Statement[];
 }
 

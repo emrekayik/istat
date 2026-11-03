@@ -88,6 +88,146 @@ describe("iStat Language - Parser & Evaluator (MATLAB/Octave Syntax)", () => {
     expect(res.outputs[0]?.name).toBe("y");
   });
 
+  it("evaluates if, elseif, and else branches", () => {
+    const env = createEnvironment();
+    evaluate(
+      `
+        x = 2;
+        if x == 1
+          result = 1;
+        elseif x == 2
+          result = 2;
+        else
+          result = 3;
+        end
+      `,
+      env
+    );
+
+    expect(env.get("result")).toBe(2);
+  });
+
+  it("short-circuits logical conditions", () => {
+    const env = createEnvironment();
+    evaluate(
+      `
+        if false && missing > 0
+          result = 1;
+        else
+          result = 2;
+        end
+        if true || anotherMissing > 0
+          result = result + 1;
+        end
+      `,
+      env
+    );
+
+    expect(env.get("result")).toBe(3);
+  });
+
+  it("supports for and while loops with break and continue", () => {
+    const env = createEnvironment();
+    evaluate(
+      `
+        total = 0;
+        for i = 1:6
+          if i == 2
+            continue;
+          end
+          if i == 5
+            break;
+          end
+          total = total + i;
+        end
+        count = 0;
+        while count < 3
+          count = count + 1;
+        end
+      `,
+      env
+    );
+
+    expect(env.get("total")).toBe(8);
+    expect(env.get("count")).toBe(3);
+  });
+
+  it("defines functions with local variables and calls them before declaration", () => {
+    const env = createEnvironment();
+    evaluate(
+      `
+        base = 100;
+        result = offset_mean(5);
+        function output = offset_mean(value)
+          temporary = value + 1;
+          output = mean([temporary, temporary + 2]);
+        end
+      `,
+      env
+    );
+
+    expect(env.get("result")).toBe(7);
+    expect(env.has("temporary")).toBe(false);
+  });
+
+  it("supports recursive user-defined functions", () => {
+    const env = createEnvironment();
+    evaluate(
+      `
+        answer = factorial(5);
+        function result = factorial(n)
+          if n <= 1
+            result = 1;
+          else
+            result = n * factorial(n - 1);
+          end
+        end
+      `,
+      env
+    );
+
+    expect(env.get("answer")).toBe(120);
+  });
+
+  it("reports invalid function calls and missing outputs", () => {
+    const env = createEnvironment();
+    evaluate(
+      `
+        function result = identity(value)
+          result = value;
+        end
+        function result = missing_output()
+          temporary = 1;
+        end
+      `,
+      env
+    );
+
+    expect(() => evaluate("identity()", env)).toThrow(
+      "Function 'identity' expects 1 argument(s), got 0"
+    );
+    expect(() => evaluate("missing_output()", env)).toThrow(
+      "Function 'missing_output' did not assign its output 'result'"
+    );
+  });
+
+  it("does not expose script variables inside function scope", () => {
+    const env = createEnvironment();
+    evaluate(
+      `
+        secret = 42;
+        function result = read_secret()
+          result = secret;
+        end
+      `,
+      env
+    );
+
+    expect(() => evaluate("read_secret()", env)).toThrow(
+      "Undefined variable or function 'secret'"
+    );
+  });
+
   it("generates SVG visualizations through built-in plot functions", () => {
     const env = createEnvironment();
     const code = `
@@ -100,4 +240,3 @@ describe("iStat Language - Parser & Evaluator (MATLAB/Octave Syntax)", () => {
     expect(svg).toContain("Hist Title");
   });
 });
-

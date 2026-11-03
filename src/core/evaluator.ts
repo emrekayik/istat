@@ -28,8 +28,14 @@ export class Environment {
   private variables = new Map<string, any>();
   private functions = new Map<string, (...args: any[]) => any>();
 
-  constructor() {
-    this.registerBuiltins();
+  constructor(private readonly parent?: Environment) {
+    if (!parent) {
+      this.registerBuiltins();
+    }
+  }
+
+  createChild(): Environment {
+    return new Environment(this);
   }
 
   set(name: string, value: any): void {
@@ -43,6 +49,9 @@ export class Environment {
     if (this.functions.has(name)) {
       return this.functions.get(name);
     }
+    if (this.parent?.hasFunction(name)) {
+      return this.parent.getFunction(name);
+    }
     if (name === "pi") return Math.PI;
     if (name === "e") return Math.E;
     if (name === "inf" || name === "Inf") return Infinity;
@@ -55,6 +64,7 @@ export class Environment {
     return (
       this.variables.has(name) ||
       this.functions.has(name) ||
+      Boolean(this.parent?.hasFunction(name)) ||
       name === "pi" ||
       name === "e" ||
       name === "inf" ||
@@ -72,6 +82,17 @@ export class Environment {
 
   registerFunction(name: string, fn: (...args: any[]) => any): void {
     this.functions.set(name, fn);
+  }
+
+  private hasFunction(name: string): boolean {
+    return this.functions.has(name) || Boolean(this.parent?.hasFunction(name));
+  }
+
+  private getFunction(name: string): (...args: any[]) => any {
+    const fn = this.functions.get(name);
+    if (fn) return fn;
+    if (this.parent) return this.parent.getFunction(name);
+    throw new ReferenceError(`Undefined function '${name}'`);
   }
 
   private registerBuiltins(): void {
@@ -267,8 +288,44 @@ export function evaluate(program: Program, env = new Environment()): ExecutionRe
   let lastValue: any = undefined;
   const outputs: { name?: string; value: any; formatted: string }[] = [];
 
+  for (const stmt of program.body) {
+    if (stmt.type !== "FunctionDeclaration") continue;
+    env.registerFunction(stmt.name, (...args) => {
+      if (args.length !== stmt.parameters.length) {
+        throw new TypeError(
+          `Function '${stmt.name}' expects ${stmt.parameters.length} argument(s), got ${args.length}`
+        );
+      }
+
+      const localEnv = env.createChild();
+      stmt.parameters.forEach((parameter, index) => {
+        localEnv.set(parameter, args[index]);
+      });
+
+      try {
+        evaluate({ type: "Program", body: stmt.body }, localEnv);
+      } catch (error) {
+        if (error instanceof BreakSignal) {
+          throw new SyntaxError("'break' cannot escape a function");
+        }
+        if (error instanceof ContinueSignal) {
+          throw new SyntaxError("'continue' cannot escape a function");
+        }
+        throw error;
+      }
+
+      if (!localEnv.getVariables().has(stmt.output)) {
+        throw new ReferenceError(
+          `Function '${stmt.name}' did not assign its output '${stmt.output}'`
+        );
+      }
+      return localEnv.get(stmt.output);
+    });
+  }
+
   function executeStatementList(statements: Statement[]): any {
     for (const stmt of statements) {
+      if (stmt.type === "FunctionDeclaration") continue;
       lastValue = executeStatement(stmt);
     }
     return lastValue;
@@ -435,6 +492,12 @@ function evalExpr(node: Expression, env: Environment): any {
 
     case "BinaryExpression": {
       const left = evalExpr(node.left, env);
+      if (node.operator === "&&" && !Array.isArray(left) && !isTruthy(left)) {
+        return 0;
+      }
+      if (node.operator === "||" && !Array.isArray(left) && isTruthy(left)) {
+        return 1;
+      }
       const right = evalExpr(node.right, env);
       return applyBinaryOp(node.operator, left, right);
     }

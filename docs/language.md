@@ -80,6 +80,20 @@ for i = 1:5
 end
 ```
 
+## User-defined functions
+
+Define a function at the top level with one output name, a function name, and zero or more parameters:
+
+```matlab
+centered = center(values);
+
+function result = center(data)
+  result = data - mean(data);
+end
+```
+
+Function declarations may appear before or after their calls and can call themselves recursively. Each call gets its own local variables; pass values as parameters rather than relying on variables from the script. The function must assign its declared output, and calls must provide exactly the declared number of arguments. Use `end` or `endfunction` to close the definition. Multiple return values and nested function declarations are not supported.
+
 ## Built-in functions
 
 The interpreter provides:
