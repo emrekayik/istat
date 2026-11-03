@@ -132,6 +132,26 @@ describe("iStat Language - Parser & Evaluator (MATLAB/Octave Syntax)", () => {
     expect(env.get("average")).toBeCloseTo(15.65);
   });
 
+  it("benchmarks user-defined functions and measures elapsed time", () => {
+    const env = createEnvironment();
+    evaluate(
+      `
+        started = tic();
+        result = benchmark(workload, 3, 0);
+        elapsed = toc(started);
+        function output = workload()
+          output = mean(1:100);
+        end
+      `,
+      env
+    );
+
+    expect(env.get("result").iterations).toBe(3);
+    expect(env.get("result").meanMs).toBeGreaterThanOrEqual(0);
+    expect(env.get("result").opsPerSecond).toBeGreaterThan(0);
+    expect(env.get("elapsed")).toBeGreaterThanOrEqual(0);
+  });
+
   it("handles comments and semicolon output suppression", () => {
     const env = createEnvironment();
     const code = `

@@ -132,6 +132,12 @@ export class Environment {
     this.registerFunction("column", (rows, key) =>
       istat.column(rows, key as string | number)
     );
+    this.registerFunction("now", () => istat.now());
+    this.registerFunction("tic", () => istat.tic());
+    this.registerFunction("toc", (startTime) => istat.toc(Number(startTime)));
+    this.registerFunction("benchmark", (callback, iterations = 100, warmup = 1) =>
+      istat.benchmark(callback, Number(iterations), Number(warmup))
+    );
     this.registerFunction("mode", (data) => istat.mode(toArray(data)));
     this.registerFunction("skewness", (data) => istat.skewness(toArray(data)));
     this.registerFunction("kurtosis", (data) => istat.kurtosis(toArray(data)));

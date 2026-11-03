@@ -13,6 +13,7 @@ export * as render from "./render";
 export * as matrix from "./matrix";
 export * as probability from "./probability";
 export * as io from "./io";
+export * as time from "./time";
 
 // 2. Flat Exports
 export * from "./descriptive";
@@ -24,6 +25,7 @@ export * from "./render";
 export * from "./matrix";
 export * from "./probability";
 export * from "./io";
+export * from "./time";
 
 // 3. Types
 export type * from "./internal/types";

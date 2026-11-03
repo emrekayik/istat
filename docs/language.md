@@ -108,6 +108,7 @@ The interpreter provides:
 | Sorting | `sort`, `quickselect` |
 | Arrays and arithmetic | `sum`, `min`, `max`, `length`, `size`, `zeros`, `ones`, `linspace`, `mod`, `rem` |
 | Math | `sqrt`, `abs`, `sin`, `cos`, `tan`, `log`, `log10`, `log2`, `exp`, `round`, `floor`, `ceil` |
+| Time and benchmarking | `now`, `tic`, `toc`, `benchmark` |
 | Charts and output | `plotHist`, `scatter`, `saveSvg`, `disp` |
 
 For matrix operands, `*` performs matrix multiplication (including dot product for two vectors), while `.*` is element-wise. `^` is matrix power for a square matrix and integer exponent. Matrix/vector dimensions must be compatible. Use `matmul`, `dot`, and `transpose` when you want the operation to be explicit.
@@ -125,6 +126,21 @@ mean(scores)
 ```
 
 Use `readCsv(path, header)` or `readXlsx(path, sheet, header)` to specify whether the first row contains headers. For XLSX files, `readXlsx` and `readData` accept a worksheet name or zero-based position as the `sheet` argument; it defaults to the first worksheet. `readJson(path)` returns the parsed JSON value. `column(rows, key)` extracts a named field from records or a column from array rows (numeric keys are 1-based). File and parse errors are reported to the caller.
+
+## Timing and benchmarking
+
+`now()` returns a monotonic timestamp in milliseconds. Pass its value (or the value returned by `tic()`) to `toc(start)` to get elapsed seconds. `benchmark(functionName, iterations, warmup)` runs a synchronous function, excludes warm-up calls from its statistics, and defaults to 100 measured iterations and one warm-up. It returns `iterations`, `totalMs`, `meanMs`, `medianMs`, `minMs`, `maxMs`, and `opsPerSecond`:
+
+```matlab
+result = benchmark(workload, 100, 5);
+result.meanMs
+
+function output = workload()
+  output = mean(1:1000);
+end
+```
+
+The callback must be a function value, such as a user-defined function name. Benchmark callbacks are synchronous; thrown errors propagate to the caller.
 
 The constants `pi`, `e`, `inf`/`Inf`, and `nan`/`NaN` are available. For function parameters, options, and return types, see the [TypeScript library reference](library.md).
 

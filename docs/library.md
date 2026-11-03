@@ -100,6 +100,17 @@ mean(column(rows, "score") as number[]); // 15.65
 
 `readJson(path)` returns the parsed JSON value. File access, unsupported extensions, invalid JSON, and missing columns throw errors.
 
+## Timing and benchmarking
+
+The `time` namespace and flat exports provide `now`, `tic`, `toc`, and `benchmark`. `now()` and `tic()` return monotonic high-resolution timestamps in milliseconds; `toc(start)` returns elapsed seconds. `benchmark(callback, iterations = 100, warmup = 1)` repeatedly invokes a synchronous callback and returns a `BenchmarkResult` containing total, mean, median, minimum, and maximum milliseconds plus operations per second. Warm-up calls are excluded from measurements, and callback errors propagate.
+
+```ts
+import { benchmark, mean, time } from "./src/istat";
+
+const result = time.benchmark(() => mean([1, 2, 3]), 1000, 10);
+result.meanMs;
+```
+
 ## Streaming
 
 `MeanAccumulator` and `VarianceAccumulator` update statistics as values arrive. Both expose `add(value)` and `count`; the `add` method is chainable. `MeanAccumulator.mean` is `NaN` before any values are added.
@@ -137,6 +148,6 @@ const svg = histogramToSvg(bins, {
 
 ## Namespaces and types
 
-The entry point exports `descriptive`, `correlation`, `regression`, `streaming`, `sorting`, `internal`, and `render` namespaces. It also re-exports public functions and types, including `Data`, `Bin`, `DescriptiveSummary`, `LinearRegressionResult`, and `PolynomialRegressionResult`.
+The entry point exports `descriptive`, `correlation`, `regression`, `streaming`, `sorting`, `internal`, `render`, `matrix`, `probability`, `io`, and `time` namespaces. It also re-exports public functions and types, including `Data`, `Bin`, `BenchmarkResult`, `DescriptiveSummary`, `LinearRegressionResult`, and `PolynomialRegressionResult`.
 
 Implementation modules are organized under `src/istat/`; their `index.ts` files define the corresponding namespace exports.

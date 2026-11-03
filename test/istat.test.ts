@@ -49,6 +49,10 @@ import {
   readXlsx,
   readJson,
   column,
+  benchmark,
+  now,
+  tic,
+  toc,
 } from "../src/istat";
 
 describe("istat - Descriptive Statistics", () => {
@@ -220,6 +224,41 @@ describe("istat - Data Import", () => {
   it("rejects unsupported extensions and missing columns", () => {
     expect(() => readData("unknown.parquet")).toThrow("unsupported file type");
     expect(() => column([{ value: 1 }], "missing")).toThrow("column 'missing' not found");
+  });
+});
+
+describe("istat - Timing and Benchmarking", () => {
+  it("measures elapsed time and summarizes benchmark samples", () => {
+    const start = tic();
+    expect(toc(start)).toBeGreaterThanOrEqual(0);
+    expect(now()).toBeGreaterThanOrEqual(start);
+
+    let calls = 0;
+    const result = benchmark(() => {
+      calls++;
+    }, 3, 2);
+
+    expect(calls).toBe(5);
+    expect(result.iterations).toBe(3);
+    expect(result.totalMs).toBeGreaterThanOrEqual(0);
+    expect(result.meanMs).toBeGreaterThanOrEqual(0);
+    expect(result.medianMs).toBeGreaterThanOrEqual(0);
+    expect(result.minMs).toBeLessThanOrEqual(result.maxMs);
+    expect(result.opsPerSecond).toBeGreaterThan(0);
+  });
+
+  it("validates benchmark arguments and timestamps", () => {
+    expect(() => benchmark("not a function" as never)).toThrow(
+      "callback must be a function"
+    );
+    expect(() => benchmark(() => {}, 0)).toThrow(
+      "iterations must be a positive integer"
+    );
+    expect(() => benchmark(() => {}, 1, -1)).toThrow(
+      "warmup must be a non-negative integer"
+    );
+    expect(() => toc(Number.NaN)).toThrow("start time must be a finite number");
+    expect(() => toc(now() + 1000)).toThrow("start time cannot be in the future");
   });
 });
 
