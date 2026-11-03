@@ -10,7 +10,7 @@ export default defineCommand({
     const rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
-      // Prompt'u yeşil ve kalın yapalım
+      // Format prompt in bold green
       prompt: pc.bold(pc.green("iStat> ")),
     });
 
