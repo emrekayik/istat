@@ -6,6 +6,7 @@ import {
   stdev,
   quantile,
   summary,
+  histogram,
   covariance,
   pearson,
   spearman,
@@ -15,7 +16,9 @@ import {
   VarianceAccumulator,
   numericSort,
   quickselect,
-} from "./index";
+  histogramToSvg,
+  scatterToSvg,
+} from "../src/istat";
 
 describe("istat - Descriptive Statistics", () => {
   it("calculates mean", () => {
@@ -55,6 +58,14 @@ describe("istat - Descriptive Statistics", () => {
     expect(s.sum).toBe(15);
     expect(s.mean).toBe(3);
     expect(s.median).toBe(3);
+  });
+
+  it("calculates histogram bins", () => {
+    const data = [1, 2, 2, 3, 3, 3, 4, 4, 5];
+    const bins = histogram(data, { bins: 4 });
+    expect(bins.length).toBe(4);
+    const totalCount = bins.reduce((acc, b) => acc + b.count, 0);
+    expect(totalCount).toBe(data.length);
   });
 });
 
@@ -125,3 +136,37 @@ describe("istat - Sorting & Quickselect", () => {
   });
 });
 
+describe("render - SVG Visualizations", () => {
+  it("renders histogram to valid SVG string", () => {
+    const data = [1, 2, 2, 3, 3, 3, 4, 4, 5];
+    const bins = histogram(data, { bins: 4 });
+    const svg = histogramToSvg(bins, {
+      title: "Test Histogram",
+      xLabel: "Value",
+      yLabel: "Frequency",
+    });
+
+    expect(svg).toContain("<svg");
+    expect(svg).toContain("</svg>");
+    expect(svg).toContain("Test Histogram");
+    expect(svg).toContain("<rect");
+  });
+
+  it("renders scatter plot to valid SVG string", () => {
+    const points: [number, number][] = [
+      [1, 2],
+      [2, 4],
+      [3, 6],
+    ];
+    const svg = scatterToSvg(points, {
+      title: "Test Scatter",
+      xLabel: "X",
+      yLabel: "Y",
+    });
+
+    expect(svg).toContain("<svg");
+    expect(svg).toContain("</svg>");
+    expect(svg).toContain("Test Scatter");
+    expect(svg).toContain("<circle");
+  });
+});

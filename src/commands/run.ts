@@ -1,36 +1,39 @@
 import { defineCommand, option } from "@bunli/core";
 import { z } from "zod";
-import { parser } from "../core/parser";
-import { readFile } from "fs/promises";
+import { evaluate, createEnvironment } from "../core/parser";
+import { readFile, writeFile } from "fs/promises";
 import { resolve, extname } from "path";
 import pc from "picocolors";
 
 export default defineCommand({
   name: "run",
-  description: "Reads and executes an .istat file",
+  description: "Reads and executes an .istat or .m script file",
   options: {
     file: option(z.string(), {
       short: "f",
-      description: "The path to the file to be run (e.g., examples/test.istat)",
+      description: "Path to the script file (e.g. examples/analysis.istat)",
+    }),
+    svg: option(z.string().optional(), {
+      short: "s",
+      description: "Save any generated chart SVG to the specified file path",
     }),
   },
   handler: async ({ flags }) => {
     if (!flags.file) {
       console.error(
-        pc.red(
-          "❌ Please specify a file path. Example: istat run -f examples/test.istat",
-        ),
+        pc.red("❌ Please specify a file path. Example: istat run -f examples/analysis.istat")
       );
       process.exit(1);
     }
 
     const filePath = resolve(process.cwd(), flags.file);
+    const ext = extname(filePath);
 
-    if (extname(filePath) !== ".istat") {
+    if (ext !== ".istat" && ext !== ".m") {
       console.warn(
         pc.yellow(
-          "⚠️  Warning: The file extension isn't .istat, but I'll try to open it anyway.",
-        ),
+          `⚠️  Warning: File extension is '${ext}', expecting '.istat' or '.m'. Proceeding anyway.`
+        )
       );
     }
 
@@ -38,30 +41,44 @@ export default defineCommand({
       const fileContent = await readFile(filePath, "utf-8");
 
       if (fileContent.trim().length === 0) {
-        console.warn(pc.yellow("⚠️  The file is empty."));
+        console.warn(pc.yellow("⚠️  The script file is empty."));
         return;
       }
 
-      const result = parser.parse(fileContent);
+      console.log(`\n${pc.cyan(pc.bold("📄 Running Script:"))} ${pc.gray(flags.file)}\n`);
 
-      console.log(`\n${pc.cyan("📄 File:")} ${pc.gray(flags.file)}`);
-      // console.log(`${pc.cyan("📝 Content:")} ${pc.gray(fileContent.trim())}`);
-      console.log(
-        `${pc.bold(pc.green("🔍 Result:"))} ${pc.bold(pc.yellow(String(result)))}\n`,
-      );
+      const env = createEnvironment();
+      const result = evaluate(fileContent, env);
+
+      // Print unsuppressed outputs
+      for (const out of result.outputs) {
+        console.log(pc.yellow(out.formatted));
+      }
+
+      // If --svg flag is passed and lastValue contains SVG
+      if (flags.svg && typeof result.lastValue === "string" && result.lastValue.includes("<svg")) {
+        await writeFile(flags.svg, result.lastValue, "utf-8");
+        console.log(`\n${pc.green(`✅ Chart SVG saved to ${pc.bold(flags.svg)}`)}`);
+      }
+
+      console.log(pc.green(pc.bold("\n✨ Script finished successfully.\n")));
     } catch (error: any) {
       if (error.code === "ENOENT") {
         console.error(
-          `\n${pc.bold(pc.red("❌ Error:"))} File not found -> ${pc.gray(filePath)}`,
+          `\n${pc.bold(pc.red("❌ Error:"))} File not found -> ${pc.gray(filePath)}`
         );
-      } else if (error.message.includes("Expected")) {
-        console.error(`\n${pc.bold(pc.red("❌ syntax error:"))}`);
+      } else if (error.message?.includes("Expected") || error.location) {
+        console.error(`\n${pc.bold(pc.red("❌ Syntax Error in script:"))}`);
         console.error(pc.red(error.message));
-        console.error(pc.gray(`File: ${flags.file}`));
+        if (error.location) {
+          console.error(
+            pc.gray(`Line ${error.location.start.line}, column ${error.location.start.column}`)
+          );
+        }
       } else {
         console.error(
-          `\n${pc.bold(pc.red("❌ Unexpected Error:"))}`,
-          error.message,
+          `\n${pc.bold(pc.red("❌ Runtime Error:"))}`,
+          error.message
         );
       }
       process.exit(1);

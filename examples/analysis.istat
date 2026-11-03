@@ -1,0 +1,27 @@
+% ==============================================
+% iStat Example Script: Statistical Data Analysis
+% MATLAB / Octave syntax
+% ==============================================
+
+% 1. Create a dataset using range and array operations
+x = 1:10;
+y = 2.5 * x + 4;
+
+% 2. Calculate descriptive statistics
+avgX = mean(x)
+avgY = mean(y)
+stdX = std(x)
+stdY = std(y)
+
+% 3. Calculate correlation and linear regression
+r = corr(x, y)
+model = linreg(x, y)
+
+% 4. Generate histogram frequency bins
+data = [1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 6, 7];
+bins = hist(data, 5)
+
+% 5. Matrix operations
+A = [1 2; 3 4];
+B = [10 20; 30 40];
+C = A + B

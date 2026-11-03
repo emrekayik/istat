@@ -115,3 +115,4 @@ export function histogram(data: Data, options: HistogramOptions = {}): Bin[] {
 
   return bins;
 }
+

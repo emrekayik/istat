@@ -15,7 +15,7 @@ src/istat/
 │   └── index.ts
 │
 ├── descriptive/           # Descriptive Statistics
-│   ├── mean.ts, median.ts, variance.ts, stdev.ts, quantile.ts, summary.ts
+│   ├── mean.ts, median.ts, variance.ts, stdev.ts, quantile.ts, summary.ts, histogram.ts
 │   └── index.ts
 │
 ├── correlation/           # Correlation & Association Measures
@@ -32,6 +32,10 @@ src/istat/
 │
 ├── sorting/               # Numeric Sorting & Selection Algorithms
 │   ├── sort.ts, quickselect.ts
+│   └── index.ts
+│
+├── render/ (src/render/)  # SVG Chart Visualizations
+│   ├── svg.ts (histogramToSvg, scatterToSvg)
 │   └── index.ts
 │
 ├── istat.test.ts          # Unit tests (bun test)
