@@ -1,0 +1,28 @@
+{
+  "name": "istat",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "istat": "./src/cli/index.ts"
+  },
+  "scripts": {
+    "typecheck": "bun check",
+    "dev": "bunli dev",
+    "build": "bunli build",
+    "test": "bun test",
+    "istat": "bun run src/index.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "bunli": "^0.9.1"
+  },
+  "peerDependencies": {
+    "typescript": "^7"
+  },
+  "dependencies": {
+    "@bunli/core": "^0.9.1",
+    "peggy": "^5.1.1",
+    "picocolors": "^1.1.1"
+  }
+}
