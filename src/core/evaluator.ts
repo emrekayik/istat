@@ -687,7 +687,7 @@ function evaluateExpression(node: Expression, env: Environment): any {
       if (node.index.length === 1) {
         const idx = Number(evalExpr(node.index[0]!, env));
         validateIndex(idx);
-        // 1-based indexing for MATLAB compatibility
+        // Language indices are 1-based.
         const val = obj[idx - 1];
         if (val === undefined) {
           throw new RangeError(`Index ${idx} out of bounds (valid range: 1-${obj.length})`);

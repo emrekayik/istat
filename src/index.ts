@@ -1,5 +1,6 @@
 import { createCLI } from "@bunli/core";
 import evalCommand from "./commands/eval";
+import editorCommand from "./commands/editor";
 import replCommand from "./commands/repl";
 import runCommand from "./commands/run";
 
@@ -10,6 +11,7 @@ const cli = await createCLI({
 });
 
 cli.command(evalCommand);
+cli.command(editorCommand);
 cli.command(replCommand);
 cli.command(runCommand);
 

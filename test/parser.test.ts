@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { evaluate, createEnvironment } from "../src/core/parser";
 
-describe("iStat Language - Parser & Evaluator (MATLAB/Octave Syntax)", () => {
+describe("iStat Language - Parser & Evaluator", () => {
   it("evaluates basic arithmetic and variables", () => {
     const env = createEnvironment();
     const result = evaluate("a = 10; b = 20; c = a + b * 2", env);
@@ -26,7 +26,7 @@ describe("iStat Language - Parser & Evaluator (MATLAB/Octave Syntax)", () => {
       [1, 2],
       [3, 4],
     ]);
-    expect(env.get("val")).toBe(3); // MATLAB 1-based indexing
+    expect(env.get("val")).toBe(3); // 1-based indexing
   });
 
   it("reports source positions and expressions for parse and indexing errors", () => {
@@ -171,7 +171,7 @@ describe("iStat Language - Parser & Evaluator (MATLAB/Octave Syntax)", () => {
   it("handles comments and semicolon output suppression", () => {
     const env = createEnvironment();
     const code = `
-      % This is a MATLAB comment
+      % This is a language comment
       x = 10; % Semicolon suppresses output
       y = 20  % No semicolon, output should be captured
       # Python-style comment

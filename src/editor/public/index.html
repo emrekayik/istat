@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#111827">
+    <title>iStat Studio</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/assets/ace.js" defer></script>
+    <script src="/assets/mode-matlab.js" defer></script>
+    <script src="/assets/theme-tomorrow_night.js" defer></script>
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="iStat Studio home">
+        <span class="brand-mark">i</span>
+        <span>iStat <span class="brand-muted">Studio</span></span>
+      </a>
+      <div class="topbar-actions">
+        <label class="select-label" for="example-select">Örnek</label>
+        <select id="example-select" aria-label="Kod örneği"></select>
+        <button id="run-button" class="run-button" type="button">
+          <span aria-hidden="true">▶</span> Çalıştır <kbd>⌘ ↵</kbd>
+        </button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="coding-panel" aria-label="iStat kod editörü">
+        <div class="panel-heading editor-heading">
+          <div>
+            <span class="eyebrow">PLAYGROUND</span>
+            <h1>iStat kodunu çalıştır</h1>
+          </div>
+          <span id="editor-status" class="status-pill">Hazır</span>
+        </div>
+        <div id="editor" aria-label="Ace kod editörü"></div>
+        <div class="editor-footer">
+          <span>iStat programlama dili</span>
+          <span>⌘ ↵ / Ctrl ↵ çalıştırır</span>
+          <button id="reset-button" class="text-button" type="button">Örneği geri yükle</button>
+        </div>
+        <section class="output-section" aria-label="Çalıştırma çıktısı">
+          <div class="output-heading">
+            <div>
+              <span class="eyebrow">CONSOLE</span>
+              <h2>Çıktı</h2>
+            </div>
+            <button id="clear-output" class="text-button" type="button">Temizle</button>
+          </div>
+          <pre id="output" class="output" aria-live="polite">Bir örnek seç veya kod yazıp çalıştır.</pre>
+        </section>
+      </section>
+
+      <aside class="docs-panel" aria-label="Dokümantasyon">
+        <div class="panel-heading docs-heading">
+          <div>
+            <span class="eyebrow">REFERENCE</span>
+            <h2>Dokümantasyon</h2>
+          </div>
+          <select id="docs-select" aria-label="Doküman bölümü"></select>
+        </div>
+        <nav id="docs-toc" class="docs-toc" aria-label="Doküman başlıkları"></nav>
+        <article id="docs-content" class="docs-content">Doküman yükleniyor…</article>
+        <div class="function-index">
+          <span class="eyebrow">FONKSİYON KATALOĞU</span>
+          <p>Örnek menüsünde istatistik, matris, olasılık, modelleme, veri aktarımı, matematik ve grafik fonksiyonlarının çalıştırılabilir örnekleri var.</p>
+        </div>
+      </aside>
+    </main>
+  </body>
+</html>

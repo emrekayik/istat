@@ -1,6 +1,6 @@
 # iStat
 
-iStat is a Bun-based command-line statistics environment with a MATLAB/Octave-inspired language, plus a modular TypeScript statistics library.
+iStat is a Bun-based command-line statistics environment with its own statistical programming language and a modular TypeScript statistics library.
 
 ## Requirements
 
@@ -25,6 +25,14 @@ Start an interactive session:
 ```sh
 bun run istat repl
 ```
+
+Open the browser-based iStat Studio with the language/library docs, Ace editor, and runnable examples:
+
+```sh
+bun run istat editor
+```
+
+Studio listens only on `127.0.0.1`; use `--port 0` to choose an available port.
 
 Run a script file:
 

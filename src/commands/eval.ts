@@ -6,7 +6,7 @@ import pc from "picocolors";
 
 export default defineCommand({
   name: "eval",
-  description: "Evaluates an expression or multi-statement MATLAB-style code and prints the result",
+  description: "Evaluates iStat expressions and scripts and prints the result",
   options: {
     input: option(z.string(), {
       short: "i",

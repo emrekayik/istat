@@ -3,21 +3,31 @@ import { readFileSync } from "fs";
 import type { Program } from "./ast";
 import { Environment, evaluate as evaluateAst, type ExecutionResult } from "./evaluator";
 
-const grammarUrl = new URL("../grammar.peggy", import.meta.url);
-const grammarPath = grammarUrl.pathname;
-
-let grammarContent: string;
-try {
-  grammarContent = readFileSync(grammarPath, "utf-8");
-} catch (error) {
-  console.error("The grammar file could not be read:", grammarPath);
+const grammarUrls = [
+  new URL("../grammar.peggy", import.meta.url),
+  new URL("./grammar.peggy", import.meta.url),
+  new URL("../src/grammar.peggy", import.meta.url),
+];
+let grammarContent: string | undefined;
+let grammarPath = "";
+for (const grammarUrl of grammarUrls) {
+  try {
+    grammarPath = grammarUrl.pathname;
+    grammarContent = readFileSync(grammarUrl, "utf-8");
+    break;
+  } catch {
+    continue;
+  }
+}
+if (grammarContent === undefined) {
+  console.error("The grammar file could not be read:", grammarUrls.map((url) => url.pathname));
   process.exit(1);
 }
 
 export const parser = peggy.generate(grammarContent);
 
 /**
- * Parses source code written in the MATLAB/Octave-like iStat language into an AST.
+ * Parses iStat source code into an AST.
  */
 export function parse(input: string): Program {
   try {

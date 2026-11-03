@@ -1,5 +1,5 @@
 // ==========================================
-// MATLAB / Octave-like Peggy Grammar for istat
+// Peggy grammar for the iStat programming language
 // ==========================================
 
 {
@@ -215,7 +215,7 @@ Additive
       return buildBinary(head, tail);
     }
 
-// Note: % is reserved for comments in MATLAB/Octave, mod/rem functions are used for modulo
+// Percent is reserved for comments, so modulo is provided through mod/rem functions.
 Multiplicative
   = head:Power tail:(_ op:(".*" / "./" / "*" / "/") _ right:Power)* {
       return buildBinary(head, tail);

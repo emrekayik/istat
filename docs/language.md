@@ -1,12 +1,12 @@
 # iStat language reference
 
-iStat implements a MATLAB/Octave-inspired language subset for evaluating numeric expressions and statistical analyses. It is not a full MATLAB or Octave implementation.
+iStat is a statistical programming language for evaluating numeric expressions and analyzing data.
 
 ## Values and variables
 
 The language supports numbers, quoted strings, booleans, identifiers, vectors, and matrices:
 
-```matlab
+```istat
 rate = 2.5;
 enabled = true;
 label = "sample";
@@ -31,15 +31,15 @@ Use parentheses to group expressions. Built-in math functions accept scalar valu
 
 Ranges are inclusive when the step reaches the endpoint:
 
-```matlab
+```istat
 whole = 1:5;       % [1, 2, 3, 4, 5]
 odds = 1:2:9;      % [1, 3, 5, 7, 9]
 countdown = 5:-1:1;
 ```
 
-Indexing uses MATLAB-style 1-based positions:
+Indexing uses 1-based positions:
 
-```matlab
+```istat
 first = whole(1);
 alsoFirst = whole[1];
 cell = matrix(2, 1);
@@ -51,7 +51,7 @@ Both parentheses and square brackets are accepted for indexing.
 
 Statements can be separated by a newline or semicolon. A semicolon after an assignment or expression suppresses that statement's displayed output:
 
-```matlab
+```istat
 answer = 6 * 7;
 answer
 ```
@@ -62,7 +62,7 @@ The second statement is displayed; the assignment is not. Supported comment form
 
 Conditional branches use `if`, optional `elseif`/`else`, and an `end` terminator (`endif` is also accepted):
 
-```matlab
+```istat
 x = 5;
 if x > 0
   result = "positive";
@@ -73,7 +73,7 @@ end
 
 `for` and `while` loops are supported, along with `break` and `continue`. In nested loops, either statement affects only the innermost loop. A `for` loop iterates over ranges lazily, so a large range does not need to be allocated as an array; use `break` to stop early:
 
-```matlab
+```istat
 total = 0;
 for i = 1:5
   total = total + i;
@@ -86,7 +86,7 @@ end
 
 Define a function at the top level with one output name, a function name, and zero or more parameters:
 
-```matlab
+```istat
 centered = center(values);
 
 function result = center(data)
@@ -121,7 +121,7 @@ The normal distribution functions accept optional `mean` and standard deviation 
 
 `readData(path)` detects the format from the extension and reads CSV, XLSX/XLS, or JSON. Relative paths are resolved from the directory where iStat is run. CSV and spreadsheet files use the first row as column headers by default and return an array of records:
 
-```matlab
+```istat
 rows = readData("measurements.csv");
 scores = column(rows, "score");
 mean(scores)
@@ -133,7 +133,7 @@ Use `readCsv(path, header)` or `readXlsx(path, sheet, header)` to specify whethe
 
 `now()` returns a monotonic timestamp in milliseconds. Pass its value (or the value returned by `tic()`) to `toc(start)` to get elapsed seconds. `benchmark(functionName, iterations, warmup)` runs a synchronous function, excludes warm-up calls from its statistics, and defaults to 100 measured iterations and one warm-up. It returns `iterations`, `totalMs`, `meanMs`, `medianMs`, `minMs`, `maxMs`, and `opsPerSecond`:
 
-```matlab
+```istat
 result = benchmark(workload, 100, 5);
 result.meanMs
 

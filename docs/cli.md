@@ -6,7 +6,23 @@ iStat is run with Bun from the repository root. The package script forwards argu
 bun run istat --help
 ```
 
-The CLI has three commands: `eval`, `run`, and `repl`.
+The CLI has four commands: `editor`, `eval`, `run`, and `repl`.
+
+## `editor`
+
+Start iStat Studio, a local browser-based editor with the language, library, and CLI documentation, runnable iStat examples, and the Ace code editor:
+
+```sh
+bun run istat editor
+```
+
+The editor is served only on `127.0.0.1` and uses the same interpreter as the CLI. Select an example category, edit the code, then click **Run** or press `Ctrl+Enter` (`⌘+Enter` on macOS). Example scripts include runnable demonstrations of the interpreter's built-in statistics, matrix, probability, regression, data import, timing, math, and plotting functions. Each run starts with a fresh environment.
+
+Options:
+
+| Option | Description |
+| --- | --- |
+| `-p, --port <number>` | Local server port (default `4173`; `0` chooses an available port) |
 
 ## `eval`
 
@@ -66,7 +82,7 @@ The CLI reports parse and runtime errors and exits with a non-zero status for fa
 
 ## Script example
 
-```matlab
+```istat
 x = 1:10;
 y = 2.5 * x + 4;
 
