@@ -38,6 +38,50 @@ describe("iStat Language - Parser & Evaluator (MATLAB/Octave Syntax)", () => {
     expect(env.get("v3")).toEqual([5, 7, 9]);
   });
 
+  it("supports matrix products and linear algebra built-ins", () => {
+    const env = createEnvironment();
+    evaluate(
+      `
+        A = [1 2; 3 4];
+        B = [5 6; 7 8];
+        product = A * B;
+        elementwise = A .* B;
+        vectorProduct = [1, 2, 3] * [4, 5, 6];
+        solution = solve([3 1; 1 2], [9, 8]);
+        inverseA = inv(A);
+        determinantA = det(A);
+      `,
+      env
+    );
+
+    expect(env.get("product")).toEqual([[19, 22], [43, 50]]);
+    expect(env.get("elementwise")).toEqual([[5, 12], [21, 32]]);
+    expect(env.get("vectorProduct")).toBe(32);
+    expect(env.get("solution")).toEqual([2, 3]);
+    expect(env.get("determinantA")).toBe(-2);
+    expect(env.get("inverseA")[0][0]).toBeCloseTo(-2);
+  });
+
+  it("provides probability and descriptive-statistics built-ins", () => {
+    const env = createEnvironment();
+    evaluate(
+      `
+        probability = binomialPmf(2, 5, 0.5);
+        cumulative = normalCdf(0);
+        eventRate = poissonPmf(2, 3);
+        mostCommon = mode([1, 2, 2, 3, 3]);
+        standardized = zscore([1, 2, 3]);
+      `,
+      env
+    );
+
+    expect(env.get("probability")).toBeCloseTo(0.3125);
+    expect(env.get("cumulative")).toBeCloseTo(0.5, 7);
+    expect(env.get("eventRate")).toBeCloseTo(0.2240418077, 9);
+    expect(env.get("mostCommon")).toEqual([2, 3]);
+    expect(env.get("standardized")[1]).toBe(0);
+  });
+
   it("executes descriptive statistics from src/istat", () => {
     const env = createEnvironment();
     const code = `

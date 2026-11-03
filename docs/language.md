@@ -98,15 +98,21 @@ Function declarations may appear before or after their calls and can call themse
 
 The interpreter provides:
 
-| Category               | Functions                                                                                                              |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Descriptive statistics | `mean`, `median`, `variance` / `var`, `stdev` / `std`, `quantile`, `summary`, `histogram` / `hist` |
-| Correlation            | `covariance` / `cov`, `pearson` / `corr`, `spearman`                                                         |
-| Regression             | `linreg` / `linearRegression`, `polyfit` / `polyreg`                                                           |
-| Sorting                | `sort`, `quickselect`                                                                                              |
-| Arrays and arithmetic  | `sum`, `min`, `max`, `length`, `size`, `zeros`, `ones`, `linspace`, `mod`, `rem`                   |
-| Math                   | `sqrt`, `abs`, `sin`, `cos`, `tan`, `log`, `log10`, `log2`, `exp`, `round`, `floor`, `ceil`    |
-| Charts and output      | `plotHist`, `scatter`, `saveSvg`, `disp`                                                                       |
+| Category | Functions |
+| --- | --- |
+| Descriptive statistics | `mean`, `median`, `variance` / `var`, `stdev` / `std`, `quantile`, `summary`, `histogram` / `hist`, `mode`, `skewness`, `kurtosis`, `zscore`, `covarianceMatrix` |
+| Correlation | `covariance` / `cov`, `pearson` / `corr`, `spearman` |
+| Regression | `linreg` / `linearRegression`, `polyfit` / `polyreg` |
+| Matrix and linear algebra | `transpose`, `matmul`, `dot`, `eye`, `diag`, `trace`, `det`, `inv`, `solve` |
+| Probability distributions | `normalPdf`, `normalCdf`, `binomialPmf`, `binomialCdf`, `poissonPmf`, `poissonCdf`, `uniformPdf`, `uniformCdf` |
+| Sorting | `sort`, `quickselect` |
+| Arrays and arithmetic | `sum`, `min`, `max`, `length`, `size`, `zeros`, `ones`, `linspace`, `mod`, `rem` |
+| Math | `sqrt`, `abs`, `sin`, `cos`, `tan`, `log`, `log10`, `log2`, `exp`, `round`, `floor`, `ceil` |
+| Charts and output | `plotHist`, `scatter`, `saveSvg`, `disp` |
+
+For matrix operands, `*` performs matrix multiplication (including dot product for two vectors), while `.*` is element-wise. `^` is matrix power for a square matrix and integer exponent. Matrix/vector dimensions must be compatible. Use `matmul`, `dot`, and `transpose` when you want the operation to be explicit.
+
+The normal distribution functions accept optional `mean` and standard deviation (`sd`) parameters. Binomial functions use `(k, trials, probability)`, Poisson functions use `(k, rate)`, and uniform functions accept optional lower and upper bounds.
 
 The constants `pi`, `e`, `inf`/`Inf`, and `nan`/`NaN` are available. For function parameters, options, and return types, see the [TypeScript library reference](library.md).
 

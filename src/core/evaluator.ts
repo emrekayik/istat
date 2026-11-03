@@ -115,6 +115,13 @@ export class Environment {
       istat.quantile(toArray(data), Number(p), { method: method as any })
     );
     this.registerFunction("summary", (data) => istat.summary(toArray(data)));
+    this.registerFunction("mode", (data) => istat.mode(toArray(data)));
+    this.registerFunction("skewness", (data) => istat.skewness(toArray(data)));
+    this.registerFunction("kurtosis", (data) => istat.kurtosis(toArray(data)));
+    this.registerFunction("zscore", (data) => istat.zscore(toArray(data)));
+    this.registerFunction("covarianceMatrix", (data, sample = true) =>
+      istat.covarianceMatrix(data, Boolean(sample))
+    );
     this.registerFunction("histogram", (data, bins = "sturges") =>
       istat.histogram(toArray(data), { bins: typeof bins === "number" ? bins : (bins as any) })
     );
@@ -151,6 +158,43 @@ export class Environment {
     );
     this.registerFunction("polyreg", (x, y, degree = 2) =>
       istat.polynomialRegression(toArray(x), toArray(y), Number(degree))
+    );
+
+    // --- Matrix and Linear Algebra ---
+    this.registerFunction("transpose", (data) => istat.transpose(data));
+    this.registerFunction("matmul", (a, b) => istat.matmul(a, b));
+    this.registerFunction("dot", (a, b) => istat.dot(toArray(a), toArray(b)));
+    this.registerFunction("eye", (size) => istat.identity(Number(size)));
+    this.registerFunction("diag", (data) => istat.diagonal(data));
+    this.registerFunction("trace", (data) => istat.trace(data));
+    this.registerFunction("det", (data) => istat.determinant(data));
+    this.registerFunction("inv", (data) => istat.inverse(data));
+    this.registerFunction("solve", (a, b) => istat.solve(a, b));
+
+    // --- Probability distributions ---
+    this.registerFunction("normalPdf", (x, mean = 0, sd = 1) =>
+      istat.normalPdf(Number(x), Number(mean), Number(sd))
+    );
+    this.registerFunction("normalCdf", (x, mean = 0, sd = 1) =>
+      istat.normalCdf(Number(x), Number(mean), Number(sd))
+    );
+    this.registerFunction("binomialPmf", (k, n, p) =>
+      istat.binomialPmf(Number(k), Number(n), Number(p))
+    );
+    this.registerFunction("binomialCdf", (k, n, p) =>
+      istat.binomialCdf(Number(k), Number(n), Number(p))
+    );
+    this.registerFunction("poissonPmf", (k, rate) =>
+      istat.poissonPmf(Number(k), Number(rate))
+    );
+    this.registerFunction("poissonCdf", (k, rate) =>
+      istat.poissonCdf(Number(k), Number(rate))
+    );
+    this.registerFunction("uniformPdf", (x, min = 0, max = 1) =>
+      istat.uniformPdf(Number(x), Number(min), Number(max))
+    );
+    this.registerFunction("uniformCdf", (x, min = 0, max = 1) =>
+      istat.uniformCdf(Number(x), Number(min), Number(max))
     );
 
     // --- istat Sorting ---
@@ -594,6 +638,16 @@ function applyBinaryOp(op: string, left: any, right: any): any {
   const isArrL = Array.isArray(left);
   const isArrR = Array.isArray(right);
 
+  if (op === "*" && isArrL && isArrR) {
+    return istat.matmul(left, right);
+  }
+  if (op === "/" && isArrL && isArrR && isMatrixValue(left) && isMatrixValue(right)) {
+    return istat.matmul(left, istat.inverse(right));
+  }
+  if (op === "^" && isArrL && isMatrixValue(left) && typeof right === "number") {
+    return istat.matrixPower(left, right);
+  }
+
   // Vectorized element-wise operations
   if (isArrL && isArrR) {
     if (left.length !== right.length) {
@@ -647,6 +701,10 @@ function applyBinaryOp(op: string, left: any, right: any): any {
     default:
       throw new Error(`Unknown binary operator '${op}'`);
   }
+}
+
+function isMatrixValue(value: unknown[]): value is number[][] {
+  return value.length > 0 && value.every((row) => Array.isArray(row));
 }
 
 export function formatValue(val: any, indent = "  "): string {
