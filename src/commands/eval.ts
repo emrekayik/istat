@@ -15,18 +15,18 @@ const colors = {
 
 export default defineCommand({
   name: "eval",
-  description: "Girilen ifadeyi kendi dilinizle ayrıştırır ve sonucu döner",
+  description:
+    "It parses the entered expression in your own language and returns the result",
   options: {
     input: option(z.string(), {
       short: "i",
-      description: 'İşlenecek metin (örn: "2 + 3")',
+      description: 'Expression to be processed (e.g., "2 + 3")',
     }),
   },
   handler: ({ flags }) => {
     if (!flags.input) {
-      // Hata mesajını kırmızı yap
       console.error(
-        pc.red('❌ Lütfen bir metin girin. Örnek: istat eval -i "2 + 3"'),
+        pc.red("❌ Please enter some text. Example: istat eval -i '2 + 3'"),
       );
       process.exit(1);
     }
@@ -35,14 +35,14 @@ export default defineCommand({
       const result = parser.parse(String(flags.input));
 
       console.log(
-        `\n${colors.cyan}${colors.bold}✅ Girdi:${colors.reset} ${colors.gray}${flags.input}${colors.reset}`,
+        `\n${colors.cyan}${colors.bold}✅ Input:${colors.reset} ${colors.gray}${flags.input}${colors.reset}`,
       );
       console.log(
-        `${colors.green}${colors.bold}🔍 Sonuç:${colors.reset} ${colors.yellow}${colors.bold}${result}${colors.reset}`,
+        `${colors.green}${colors.bold}🔍 Result:${colors.reset} ${colors.yellow}${colors.bold}${result}${colors.reset}`,
       );
     } catch (error: any) {
       console.error(
-        `\n${colors.red}${colors.bold}❌ Ayrıştırma Hatası:${colors.reset}`,
+        `\n${colors.red}${colors.bold}❌ Parsing Error:${colors.reset}`,
       );
       console.error(`${colors.red}${error.message}${colors.reset}`);
       process.exit(1);

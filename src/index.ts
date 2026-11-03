@@ -1,6 +1,7 @@
 import { createCLI } from "@bunli/core";
 import evalCommand from "./commands/eval";
 import replCommand from "./commands/repl";
+import runCommand from "./commands/run";
 
 const cli = await createCLI({
   name: "istat",
@@ -10,5 +11,6 @@ const cli = await createCLI({
 
 cli.command(evalCommand);
 cli.command(replCommand);
+cli.command(runCommand);
 
 await cli.run();
