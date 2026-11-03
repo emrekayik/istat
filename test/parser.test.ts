@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { evaluate, createEnvironment } from "./parser";
+import { evaluate, createEnvironment } from "../src/core/parser";
 
 describe("iStat Language - Parser & Evaluator (MATLAB/Octave Syntax)", () => {
   it("evaluates basic arithmetic and variables", () => {
