@@ -8,7 +8,7 @@ let grammarContent: string;
 try {
   grammarContent = readFileSync(grammarPath, "utf-8");
 } catch (error) {
-  console.error("Gramer dosyası okunamadı:", grammarPath);
+  console.error("The grammar file could not be read:", grammarPath);
   process.exit(1);
 }
 

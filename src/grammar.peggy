@@ -1,27 +1,27 @@
 start = expression
 
-// Toplama ve Çıkarma
+// Addition and Subtraction
 expression = head:term tail:(_ op:("+" / "-") _ t:term)* {
   return tail.reduce((result, [, op, , t]) => {
     return op === "+" ? result + t : result - t;
   }, head);
 }
 
-// Çarpma
+// Multiplication
 term = head:factor tail:(_ "*" _ f:factor)* {
   return tail.reduce((result, [, , , f]) => {
     return result * f;
   }, head);
 }
 
-// Parantezler veya Sayılar
+// Parentheses or Numbers
 factor = "(" _ expr:expression _ ")" { return expr; }
        / number
 
-// Sayı okuma
+// Parse number
 number = digits:[0-9]+ {
   return parseInt(digits.join(""), 10);
 }
 
-// İsteğe bağlı boşluklar (Space, Tab, Newline)
+// Optional whitespace (Space, Tab, Newline)
 _ = [ \t\n\r]*
