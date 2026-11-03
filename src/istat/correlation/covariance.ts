@@ -3,8 +3,24 @@ import { assertEqualLengths, assertMinLength } from "../internal/validate";
 import type { Data } from "../internal/types";
 
 /**
- * Computes the covariance between two variables.
- * @param sample If true, computes sample covariance (divided by n-1); if false, computes population covariance (divided by n).
+ * Computes the covariance between two paired numerical datasets.
+ *
+ * @param {Data} x - First array of numbers (`number[]`).
+ * @param {Data} y - Second array of numbers (`number[]`). Must have identical length to `x`.
+ * @param {boolean} [sample=true] - If `true`, computes sample covariance (divided by n - 1); if `false`, computes population covariance (divided by n).
+ * @returns {number} The calculated covariance.
+ *
+ * @example
+ * ```ts
+ * const x: number[] = [1, 2, 3, 4, 5];
+ * const y: number[] = [2, 4, 6, 8, 10];
+ *
+ * // Sample covariance (sample = true, divisor = n - 1)
+ * const sampleCov = covariance(x, y); // => 5.0
+ *
+ * // Population covariance (sample = false, divisor = n)
+ * const popCov = covariance(x, y, false); // => 4.0
+ * ```
  */
 export function covariance(x: Data, y: Data, sample = true): number {
   assertEqualLengths(x, y, "covariance");

@@ -7,6 +7,12 @@ export interface Point2D {
   readonly y: number;
 }
 
+export interface Bin {
+  readonly x0: number;
+  readonly x1: number;
+  readonly count: number;
+}
+
 export interface LinearRegressionResult {
   readonly slope: number;
   readonly intercept: number;

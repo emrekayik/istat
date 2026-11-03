@@ -27,7 +27,21 @@ function rank(data: Data): number[] {
 }
 
 /**
- * Computes Spearman's rank correlation coefficient between two variables.
+ * Computes Spearman's rank correlation coefficient between two paired numerical datasets.
+ * Measures monotonic relationships regardless of whether they are linear.
+ *
+ * @param {Data} x - First array of numbers (`number[]`).
+ * @param {Data} y - Second array of numbers (`number[]`). Must have identical length to `x`.
+ * @returns {number} Spearman rank correlation coefficient (`-1 <= rho <= 1`).
+ *
+ * @example
+ * ```ts
+ * const x: number[] = [1, 2, 3, 4, 5];
+ * const y: number[] = [10, 20, 50, 100, 500]; // Monotonic non-linear growth
+ *
+ * const rho = spearman(x, y);
+ * console.log(rho); // => 1.0 (perfect monotonic rank correlation)
+ * ```
  */
 export function spearman(x: Data, y: Data): number {
   assertEqualLengths(x, y, "spearman");

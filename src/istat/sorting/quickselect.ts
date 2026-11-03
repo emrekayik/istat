@@ -2,6 +2,26 @@
  * Quickselect algorithm: Finds the k-th smallest element in an array (0-indexed).
  * Average time complexity: O(n).
  * Note: This function may partially mutate the given array in-place.
+ *
+ * @param {number[]} arr - A mutable numeric array.
+ * @param {number} k - The 0-based rank to find (`0 <= k < arr.length`). E.g., `k = 0` finds the minimum element.
+ * @param {number} [left=0] - The left boundary index.
+ * @param {number} [right=arr.length - 1] - The right boundary index.
+ * @returns {number} The value of the k-th smallest element.
+ *
+ * @example
+ * ```ts
+ * const arr: number[] = [9, 3, 7, 1, 5, 4, 8, 2, 6];
+ *
+ * const min = quickselect([...arr], 0); // 0-th smallest (minimum)
+ * console.log(min); // => 1
+ *
+ * const medianVal = quickselect([...arr], 4); // 4th index in 9-element array
+ * console.log(medianVal); // => 5
+ *
+ * const max = quickselect([...arr], 8); // largest element
+ * console.log(max); // => 9
+ * ```
  */
 export function quickselect(
   arr: number[],

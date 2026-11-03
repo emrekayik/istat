@@ -2,8 +2,26 @@ import { assertEqualLengths, assertMinLength } from "../internal/validate";
 import type { Data, PolynomialRegressionResult } from "../internal/types";
 
 /**
- * Polynomial regression: y = a0 + a1*x + a2*x^2 + ...
- * Solves the normal equations using Gaussian elimination.
+ * Fits a polynomial regression model:
+ * `y = a0 + a1 * x + a2 * x^2 + ... + an * x^degree`
+ * Solves the normal equations using Gaussian elimination with partial pivoting.
+ *
+ * @param {Data} x - Independent variable data array (`number[]`).
+ * @param {Data} y - Dependent variable data array (`number[]`). Must have identical length to `x`.
+ * @param {number} [degree=2] - The degree of the polynomial to fit (e.g., 2 for quadratic).
+ * @returns {PolynomialRegressionResult} An object containing `coefficients`, `degree`, `r2`, and a `predict(x: number): number` helper function.
+ *
+ * @example
+ * ```ts
+ * const x: number[] = [-2, -1, 0, 1, 2];
+ * const y: number[] = [4, 1, 0, 1, 4]; // Exact relationship: y = x^2 (a0=0, a1=0, a2=1)
+ *
+ * const model = polynomialRegression(x, y, 2);
+ *
+ * console.log(model.coefficients); // => [0, 0, 1]
+ * console.log(model.r2);           // => 1.0
+ * console.log(model.predict(3));   // => 9.0 (3^2)
+ * ```
  */
 export function polynomialRegression(
   x: Data,

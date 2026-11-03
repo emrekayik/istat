@@ -3,7 +3,25 @@ import { assertEqualLengths, assertMinLength } from "../internal/validate";
 import type { Data, LinearRegressionResult } from "../internal/types";
 
 /**
- * Fits a simple linear regression model using Ordinary Least Squares (OLS): y = slope * x + intercept.
+ * Fits a simple linear regression model using Ordinary Least Squares (OLS):
+ * `y = slope * x + intercept`
+ *
+ * @param {Data} x - Independent variable data array (`number[]`).
+ * @param {Data} y - Dependent variable data array (`number[]`). Must have identical length to `x`.
+ * @returns {LinearRegressionResult} An object containing `slope`, `intercept`, coefficient of determination `r2`, and a `predict(x: number): number` helper function.
+ *
+ * @example
+ * ```ts
+ * const x: number[] = [1, 2, 3, 4, 5];
+ * const y: number[] = [3, 5, 7, 9, 11]; // Exact relationship: y = 2x + 1
+ *
+ * const model = linearRegression(x, y);
+ *
+ * console.log(model.slope);     // => 2.0
+ * console.log(model.intercept); // => 1.0
+ * console.log(model.r2);        // => 1.0
+ * console.log(model.predict(6));// => 13.0 (2 * 6 + 1)
+ * ```
  */
 export function linearRegression(x: Data, y: Data): LinearRegressionResult {
   assertEqualLengths(x, y, "linearRegression");
