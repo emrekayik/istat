@@ -84,15 +84,15 @@ end
 
 The interpreter provides:
 
-| Category | Functions |
-| --- | --- |
+| Category               | Functions                                                                                                              |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | Descriptive statistics | `mean`, `median`, `variance` / `var`, `stdev` / `std`, `quantile`, `summary`, `histogram` / `hist` |
-| Correlation | `covariance` / `cov`, `pearson` / `corr`, `spearman` |
-| Regression | `linreg` / `linearRegression`, `polyfit` / `polyreg` |
-| Sorting | `sort`, `quickselect` |
-| Arrays and arithmetic | `sum`, `min`, `max`, `length`, `size`, `zeros`, `ones`, `linspace`, `mod`, `rem` |
-| Math | `sqrt`, `abs`, `sin`, `cos`, `tan`, `log`, `log10`, `log2`, `exp`, `round`, `floor`, `ceil` |
-| Charts and output | `plotHist`, `scatter`, `saveSvg`, `disp` |
+| Correlation            | `covariance` / `cov`, `pearson` / `corr`, `spearman`                                                         |
+| Regression             | `linreg` / `linearRegression`, `polyfit` / `polyreg`                                                           |
+| Sorting                | `sort`, `quickselect`                                                                                              |
+| Arrays and arithmetic  | `sum`, `min`, `max`, `length`, `size`, `zeros`, `ones`, `linspace`, `mod`, `rem`                   |
+| Math                   | `sqrt`, `abs`, `sin`, `cos`, `tan`, `log`, `log10`, `log2`, `exp`, `round`, `floor`, `ceil`    |
+| Charts and output      | `plotHist`, `scatter`, `saveSvg`, `disp`                                                                       |
 
 The constants `pi`, `e`, `inf`/`Inf`, and `nan`/`NaN` are available. For function parameters, options, and return types, see the [TypeScript library reference](library.md).
 
