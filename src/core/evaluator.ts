@@ -242,6 +242,17 @@ export class Environment {
   }
 }
 
+class BreakSignal extends Error {}
+class ContinueSignal extends Error {}
+
+function isTruthy(val: any): boolean {
+  if (typeof val === "boolean") return val;
+  if (typeof val === "number") return val !== 0 && !Number.isNaN(val);
+  if (Array.isArray(val)) return val.length > 0 && val.every((x) => isTruthy(x));
+  if (typeof val === "string") return val.length > 0;
+  return Boolean(val);
+}
+
 function toArray(data: any): number[] {
   if (Array.isArray(data)) {
     return data.map((v) => Number(v));
@@ -256,32 +267,117 @@ export function evaluate(program: Program, env = new Environment()): ExecutionRe
   let lastValue: any = undefined;
   const outputs: { name?: string; value: any; formatted: string }[] = [];
 
-  for (const stmt of program.body) {
-    if (stmt.type === "AssignmentStatement") {
-      const val = evalExpr(stmt.value, env);
-      env.set(stmt.name, val);
-      env.set("ans", val);
-      lastValue = val;
-      if (!stmt.suppressOutput) {
-        outputs.push({
-          name: stmt.name,
-          value: val,
-          formatted: `${stmt.name} =\n${formatValue(val)}`,
-        });
+  function executeStatementList(statements: Statement[]): any {
+    for (const stmt of statements) {
+      lastValue = executeStatement(stmt);
+    }
+    return lastValue;
+  }
+
+  function executeStatement(stmt: Statement): any {
+    switch (stmt.type) {
+      case "BreakStatement":
+        throw new BreakSignal();
+      case "ContinueStatement":
+        throw new ContinueSignal();
+
+      case "AssignmentStatement": {
+        const val = evalExpr(stmt.value, env);
+        env.set(stmt.name, val);
+        env.set("ans", val);
+        if (!stmt.suppressOutput) {
+          outputs.push({
+            name: stmt.name,
+            value: val,
+            formatted: `${stmt.name} =\n${formatValue(val)}`,
+          });
+        }
+        return val;
       }
-    } else if (stmt.type === "ExpressionStatement") {
-      const val = evalExpr(stmt.expression, env);
-      env.set("ans", val);
-      lastValue = val;
-      if (!stmt.suppressOutput) {
-        outputs.push({
-          value: val,
-          formatted: `ans =\n${formatValue(val)}`,
-        });
+
+      case "ExpressionStatement": {
+        const val = evalExpr(stmt.expression, env);
+        env.set("ans", val);
+        if (!stmt.suppressOutput) {
+          outputs.push({
+            value: val,
+            formatted: `ans =\n${formatValue(val)}`,
+          });
+        }
+        return val;
       }
+
+      case "IfStatement": {
+        const cond = evalExpr(stmt.test, env);
+        if (isTruthy(cond)) {
+          return executeStatementList(stmt.consequent);
+        } else if (stmt.alternate) {
+          return executeStatementList(stmt.alternate);
+        }
+        return undefined;
+      }
+
+      case "ForStatement": {
+        const iterable = evalExpr(stmt.iterable, env);
+        let items: any[];
+        if (Array.isArray(iterable)) {
+          items = iterable;
+        } else if (typeof iterable === "number") {
+          items = [iterable];
+        } else if (iterable && typeof iterable[Symbol.iterator] === "function") {
+          items = Array.from(iterable);
+        } else {
+          throw new TypeError(`Cannot iterate over ${typeof iterable}`);
+        }
+
+        let loopVal: any = undefined;
+        for (const item of items) {
+          env.set(stmt.variable, item);
+          try {
+            loopVal = executeStatementList(stmt.body);
+          } catch (e) {
+            if (e instanceof BreakSignal) {
+              break;
+            } else if (e instanceof ContinueSignal) {
+              continue;
+            } else {
+              throw e;
+            }
+          }
+        }
+        return loopVal;
+      }
+
+      case "WhileStatement": {
+        let loopVal: any = undefined;
+        let iterations = 0;
+        const maxIterations = 1_000_000;
+
+        while (isTruthy(evalExpr(stmt.test, env))) {
+          if (++iterations > maxIterations) {
+            throw new RangeError("Maximum loop iterations (1,000,000) exceeded");
+          }
+          try {
+            loopVal = executeStatementList(stmt.body);
+          } catch (e) {
+            if (e instanceof BreakSignal) {
+              break;
+            } else if (e instanceof ContinueSignal) {
+              continue;
+            } else {
+              throw e;
+            }
+          }
+        }
+        return loopVal;
+      }
+
+      default:
+        throw new Error(`Unknown statement type: ${(stmt as any).type}`);
     }
   }
 
+  executeStatementList(program.body);
   return { lastValue, outputs };
 }
 

@@ -9,7 +9,14 @@ export interface Program {
   body: Statement[];
 }
 
-export type Statement = AssignmentStatement | ExpressionStatement;
+export type Statement =
+  | AssignmentStatement
+  | ExpressionStatement
+  | IfStatement
+  | ForStatement
+  | WhileStatement
+  | BreakStatement
+  | ContinueStatement;
 
 export interface AssignmentStatement {
   type: "AssignmentStatement";
@@ -22,6 +29,34 @@ export interface ExpressionStatement {
   type: "ExpressionStatement";
   expression: Expression;
   suppressOutput: boolean;
+}
+
+export interface IfStatement {
+  type: "IfStatement";
+  test: Expression;
+  consequent: Statement[];
+  alternate?: Statement[];
+}
+
+export interface ForStatement {
+  type: "ForStatement";
+  variable: string;
+  iterable: Expression;
+  body: Statement[];
+}
+
+export interface WhileStatement {
+  type: "WhileStatement";
+  test: Expression;
+  body: Statement[];
+}
+
+export interface BreakStatement {
+  type: "BreakStatement";
+}
+
+export interface ContinueStatement {
+  type: "ContinueStatement";
 }
 
 export type Expression =

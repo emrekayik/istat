@@ -32,6 +32,14 @@ StatementSeparator
   = (";" / "," / EOL / [ \t] / Comment)+
 
 Statement
+  = IfStatement
+  / ForStatement
+  / WhileStatement
+  / BreakStatement
+  / ContinueStatement
+  / SimpleStatement
+
+SimpleStatement
   = stmt:(Assignment / ExpressionStatementWrapper) suppress:(";" { return true; })? {
       return {
         ...stmt,
@@ -55,6 +63,73 @@ ExpressionStatementWrapper
         expression: expr
       };
     }
+
+// --- Control Flow Statements ---
+
+IfStatement
+  = "if" _ test:Expression BlockDelimiter body:StatementList?
+    elseifs:ElseIfClause*
+    elseClause:ElseClause?
+    __ ("endif" / "end") _ ";"? {
+      let alternate = elseClause || [];
+      for (let i = elseifs.length - 1; i >= 0; i--) {
+        const ei = elseifs[i];
+        alternate = [{
+          type: "IfStatement",
+          test: ei.test,
+          consequent: ei.body,
+          alternate: alternate
+        }];
+      }
+      return {
+        type: "IfStatement",
+        test: test,
+        consequent: body || [],
+        alternate: alternate.length > 0 ? alternate : undefined
+      };
+    }
+
+ElseIfClause
+  = __ "elseif" _ test:Expression BlockDelimiter body:StatementList? {
+      return { test, body: body || [] };
+    }
+
+ElseClause
+  = __ "else" BlockDelimiter body:StatementList? {
+      return body || [];
+    }
+
+ForStatement
+  = "for" _ id:Identifier _ "=" _ iter:Expression BlockDelimiter body:StatementList? __ ("endfor" / "end") _ ";"? {
+      return {
+        type: "ForStatement",
+        variable: id.name,
+        iterable: iter,
+        body: body || []
+      };
+    }
+
+WhileStatement
+  = "while" _ test:Expression BlockDelimiter body:StatementList? __ ("endwhile" / "end") _ ";"? {
+      return {
+        type: "WhileStatement",
+        test: test,
+        body: body || []
+      };
+    }
+
+BreakStatement
+  = "break" _ ";"? {
+      return { type: "BreakStatement" };
+    }
+
+ContinueStatement
+  = "continue" _ ";"? {
+      return { type: "ContinueStatement" };
+    }
+
+BlockDelimiter
+  = _ (";" / "," / EOL)+ __
 
 // --- Expressions Precedence Hierarchy ---
 
@@ -256,7 +331,20 @@ IdentifierName
   = !Keyword [a-zA-Z_][a-zA-Z0-9_]* { return text(); }
 
 Keyword
-  = ("true" / "false") ![a-zA-Z0-9_]
+  = ( "true"
+    / "false"
+    / "elseif"
+    / "else"
+    / "endif"
+    / "endfor"
+    / "endwhile"
+    / "end"
+    / "if"
+    / "for"
+    / "while"
+    / "break"
+    / "continue"
+    ) ![a-zA-Z0-9_]
 
 // --- Whitespace & Comments ---
 
