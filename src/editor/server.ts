@@ -16,6 +16,7 @@ const docsDirectory =
 const aceDirectory = dirname(
   fileURLToPath(import.meta.resolve("ace-builds/src-noconflict/ace.js"))
 );
+const replEnvironments = new Map<string, ReturnType<typeof createEnvironment>>();
 
 const documents = {
   language: { title: "Language reference", file: "language.md" },
@@ -97,6 +98,82 @@ export async function handleEditorRequest(request: Request): Promise<Response> {
     return jsonResponse(editorExamples);
   }
 
+  if (request.method === "POST" && url.pathname === "/api/repl") {
+    const contentLength = Number(request.headers.get("content-length") ?? 0);
+    if (contentLength > 100_000) {
+      return jsonResponse({ error: "Code exceeds the 100 KB limit" }, 413);
+    }
+
+    let payload: unknown;
+    try {
+      payload = await request.json();
+    } catch {
+      return jsonResponse({ error: "Request body must be valid JSON" }, 400);
+    }
+    if (
+      typeof payload !== "object" ||
+      payload === null ||
+      !("code" in payload) ||
+      typeof payload.code !== "string" ||
+      !("sessionId" in payload) ||
+      typeof payload.sessionId !== "string" ||
+      !/^[a-zA-Z0-9_-]{1,128}$/.test(payload.sessionId)
+    ) {
+      return jsonResponse(
+        { error: "Request must include string 'code' and valid 'sessionId' fields" },
+        400
+      );
+    }
+    if (payload.code.length > 100_000) {
+      return jsonResponse({ error: "Code exceeds the 100 KB limit" }, 413);
+    }
+
+    const env =
+      replEnvironments.get(payload.sessionId) ?? createEnvironment();
+    replEnvironments.set(payload.sessionId, env);
+    const input = payload.code.trim();
+
+    try {
+      let outputs: string[];
+      let result = "";
+      if (input === "clear") {
+        env.clearVariables();
+        outputs = ["All session variables cleared."];
+      } else if (["vars", "who", "whos"].includes(input)) {
+        const variables = [...env.getVariables()].filter(([name]) => name !== "ans");
+        outputs =
+          variables.length === 0
+            ? ["No variables defined."]
+            : [
+                variables
+                  .map(([name, value]) => `${name} =\n${formatValue(value)}`)
+                  .join("\n\n"),
+              ];
+      } else if (input === "help" || input === "?") {
+        outputs = ["Enter iStat expressions; use vars, clear, or help."];
+      } else {
+        const evaluation = evaluate(payload.code, env);
+        outputs = evaluation.outputs.map((output) => output.formatted);
+        result = formatValue(evaluation.lastValue);
+      }
+
+      return jsonResponse({ outputs, result });
+    } catch (error) {
+      const failure = error instanceof Error ? error : new Error(String(error));
+      const sourceLocation =
+        "sourceLocation" in failure ? failure.sourceLocation : undefined;
+      const parserLocation =
+        "location" in failure ? failure.location : undefined;
+      return jsonResponse(
+        {
+          error: failure.message,
+          location: sourceLocation ?? parserLocation,
+        },
+        400
+      );
+    }
+  }
+
   if (request.method === "POST" && url.pathname === "/api/evaluate") {
     const contentLength = Number(request.headers.get("content-length") ?? 0);
     if (contentLength > 100_000) {
@@ -122,10 +199,17 @@ export async function handleEditorRequest(request: Request): Promise<Response> {
     }
 
     try {
-      const result = evaluate(payload.code, createEnvironment());
+      const env = createEnvironment();
+      const result = evaluate(payload.code, env);
       return jsonResponse({
         outputs: result.outputs.map((output) => output.formatted),
         result: formatValue(result.lastValue),
+        variables: [...env.getVariables()]
+          .filter(([name]) => name !== "ans")
+          .map(([name, value]) => ({
+            name,
+            formatted: formatValue(value),
+          })),
       });
     } catch (error) {
       const failure = error instanceof Error ? error : new Error(String(error));

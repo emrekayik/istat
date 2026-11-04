@@ -16,7 +16,7 @@ Start iStat Studio, a local browser-based editor with the language, library, and
 bun run istat editor
 ```
 
-The editor is served only on `127.0.0.1` and uses the same interpreter as the CLI. Select an example category, edit the code, then click **Run** or press `Ctrl+Enter` (`⌘+Enter` on macOS). Example scripts include runnable demonstrations of the interpreter's built-in statistics, matrix, probability, regression, data import, timing, math, and plotting functions. Each run starts with a fresh environment.
+The editor is served only on `127.0.0.1` and uses the same interpreter as the CLI. Select an example category, edit the code, then click **Run** or press `Ctrl+Enter` (`⌘+Enter` on macOS). Example scripts include runnable demonstrations of the interpreter's built-in statistics, matrix, probability, regression, data import, timing, math, and plotting functions. Each script run starts with a fresh environment. The interactive console below it keeps variables between commands; enter one expression at a time and use `vars` to inspect or `clear` to reset the console session.
 
 Options:
 

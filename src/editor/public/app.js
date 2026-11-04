@@ -16,11 +16,24 @@ const docsToc = document.querySelector("#docs-toc");
 const output = document.querySelector("#output");
 const status = document.querySelector("#editor-status");
 const runButton = document.querySelector("#run-button");
+const replForm = document.querySelector("#repl-form");
+const replInput = document.querySelector("#repl-input");
+const replSubmit = document.querySelector(".repl-submit");
+const replSessionId =
+  sessionStorage.getItem("istat-repl-session") ?? crypto.randomUUID();
+sessionStorage.setItem("istat-repl-session", replSessionId);
+const replHistory = [];
+let replHistoryIndex = 0;
 let selectedExample = null;
 
 function setStatus(message, kind = "ready") {
   status.textContent = message;
   status.dataset.kind = kind;
+}
+
+function appendConsoleOutput(text) {
+  output.textContent += `${output.textContent ? "\n\n" : ""}${text}`;
+  output.scrollTop = output.scrollHeight;
 }
 
 async function loadExamples() {
@@ -44,7 +57,6 @@ async function loadExamples() {
     selectedExample = examples.find((example) => example.id === exampleSelect.value);
     if (selectedExample) {
       editor.setValue(selectedExample.code, -1);
-      output.textContent = "Örnek hazır. Çalıştırmak için ▶ Çalıştır düğmesine bas.";
       setStatus("Örnek yüklendi");
     }
   });
@@ -84,7 +96,6 @@ async function runCode() {
   }
   runButton.disabled = true;
   setStatus("Çalışıyor…", "running");
-  output.textContent = "Kod yorumlanıyor…";
   try {
     const response = await fetch("/api/evaluate", {
       method: "POST",
@@ -94,25 +105,74 @@ async function runCode() {
     const result = await response.json();
     if (!response.ok) throw new Error(result.error ?? "Kod çalıştırılamadı.");
     const sections = [...result.outputs];
-    if (result.result) sections.push(`ans =\n${result.result}`);
-    output.textContent = sections.join("\n\n") || "Kod hatasız çalıştı.";
+    if (result.variables.length) {
+      sections.push(
+        `Değişkenler:\n${result.variables
+          .map(({ name, formatted }) => `${name} =\n${formatted}`)
+          .join("\n\n")}`
+      );
+    }
+    if (!sections.length && result.result) sections.push(`ans =\n${result.result}`);
+    appendConsoleOutput(`▶ Script\n${sections.join("\n\n") || "Kod hatasız çalıştı."}`);
     setStatus("Tamamlandı", "success");
   } catch (error) {
-    output.textContent = error.message;
+    appendConsoleOutput(`Script error: ${error.message}`);
     setStatus("Hata", "error");
   } finally {
     runButton.disabled = false;
   }
 }
 
+async function runReplCommand(event) {
+  event.preventDefault();
+  const code = replInput.value.trim();
+  if (!code) return;
+
+  replInput.value = "";
+  replHistory.push(code);
+  replHistoryIndex = replHistory.length;
+  appendConsoleOutput(`iStat ❯ ${code}`);
+  replInput.disabled = true;
+  replSubmit.disabled = true;
+
+  try {
+    const response = await fetch("/api/repl", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code, sessionId: replSessionId }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error ?? "Komut çalıştırılamadı.");
+    appendConsoleOutput(result.outputs.join("\n") || "Komut tamamlandı.");
+  } catch (error) {
+    appendConsoleOutput(`Error: ${error.message}`);
+  } finally {
+    replInput.disabled = false;
+    replSubmit.disabled = false;
+    replInput.focus();
+  }
+}
+
 runButton.addEventListener("click", runCode);
+replForm.addEventListener("submit", runReplCommand);
+replInput.addEventListener("keydown", (event) => {
+  if (event.key === "ArrowUp" && replHistoryIndex > 0) {
+    event.preventDefault();
+    replHistoryIndex -= 1;
+    replInput.value = replHistory[replHistoryIndex];
+  } else if (event.key === "ArrowDown" && replHistoryIndex < replHistory.length) {
+    event.preventDefault();
+    replHistoryIndex += 1;
+    replInput.value = replHistory[replHistoryIndex] ?? "";
+  }
+});
 document.querySelector("#reset-button").addEventListener("click", () => {
   if (!selectedExample) return;
   editor.setValue(selectedExample.code, -1);
   setStatus("Örnek geri yüklendi");
 });
 document.querySelector("#clear-output").addEventListener("click", () => {
-  output.textContent = "Çıktı temizlendi.";
+  output.textContent = "Konsol temizlendi. Oturum değişkenleri korunuyor.";
   setStatus("Hazır");
 });
 docsSelect.addEventListener("change", () => {

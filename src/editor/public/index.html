@@ -44,12 +44,18 @@
         <section class="output-section" aria-label="Çalıştırma çıktısı">
           <div class="output-heading">
             <div>
-              <span class="eyebrow">CONSOLE</span>
-              <h2>Çıktı</h2>
+              <span class="eyebrow">REPL CONSOLE</span>
+              <h2>Etkileşimli konsol</h2>
             </div>
             <button id="clear-output" class="text-button" type="button">Temizle</button>
           </div>
-          <pre id="output" class="output" aria-live="polite">Bir örnek seç veya kod yazıp çalıştır.</pre>
+          <pre id="output" class="output" aria-live="polite">Komutları burada sırayla çalıştırabilirsin. Örnek: x = 1:5</pre>
+          <form id="repl-form" class="repl-form">
+            <label for="repl-input" class="repl-prompt">iStat ❯</label>
+            <input id="repl-input" type="text" autocomplete="off" spellcheck="false"
+              placeholder="Bir ifade yazıp Enter'a bas…" aria-label="iStat REPL komutu">
+            <button type="submit" class="repl-submit">Çalıştır</button>
+          </form>
         </section>
       </section>
 
