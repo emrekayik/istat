@@ -1,0 +1,59 @@
+{
+  "If block": {
+    "prefix": "if",
+    "body": [
+      "if ${1:condition}",
+      "\t$0",
+      "end"
+    ],
+    "description": "Create an if block"
+  },
+  "If / else block": {
+    "prefix": "ife",
+    "body": [
+      "if ${1:condition}",
+      "\t$2",
+      "else",
+      "\t$0",
+      "end"
+    ],
+    "description": "Create an if/else block"
+  },
+  "For loop": {
+    "prefix": "for",
+    "body": [
+      "for ${1:i} = ${2:1}:${3:10}",
+      "\t$0",
+      "end"
+    ],
+    "description": "Create a for loop"
+  },
+  "While loop": {
+    "prefix": "while",
+    "body": [
+      "while ${1:condition}",
+      "\t$0",
+      "end"
+    ],
+    "description": "Create a while loop"
+  },
+  "Function definition": {
+    "prefix": "function",
+    "body": [
+      "function ${1:result} = ${2:name}(${3:input})",
+      "\t$0",
+      "end"
+    ],
+    "description": "Define a function with one output"
+  },
+  "Vector": {
+    "prefix": "vec",
+    "body": ["${1:name} = [${2:1, 2, 3}]"],
+    "description": "Create a vector"
+  },
+  "Matrix": {
+    "prefix": "mat",
+    "body": ["${1:name} = [${2:1 2}; ${3:3 4}]"],
+    "description": "Create a matrix"
+  }
+}

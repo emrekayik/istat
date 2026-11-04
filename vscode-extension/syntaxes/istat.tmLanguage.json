@@ -1,0 +1,90 @@
+{
+  "scopeName": "source.istat",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#function-declaration" },
+    { "include": "#builtins" },
+    { "include": "#constants" },
+    { "include": "#keywords" },
+    { "include": "#numbers" },
+    { "include": "#operators" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.block.istat",
+          "begin": "/\\*",
+          "end": "\\*/"
+        },
+        {
+          "name": "comment.line.percentage.istat",
+          "match": "%.*$"
+        },
+        {
+          "name": "comment.line.double-slash.istat",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.line.number-sign.istat",
+          "match": "#.*$"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.istat",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.istat",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.istat",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.istat",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "function-declaration": {
+      "patterns": [
+        {
+          "name": "keyword.declaration.function.istat",
+          "match": "\\bfunction\\b"
+        }
+      ]
+    },
+    "builtins": {
+      "name": "support.function.istat",
+      "match": "\\b(mean|median|variance|var|stdev|std|quantile|summary|readData|readCsv|readXlsx|readJson|column|now|tic|toc|benchmark|mode|skewness|kurtosis|zscore|covarianceMatrix|histogram|hist|covariance|cov|pearson|corr|spearman|linreg|linearRegression|polyfit|polyreg|transpose|matmul|dot|eye|diag|trace|det|inv|solve|normalPdf|normalCdf|binomialPmf|binomialCdf|poissonPmf|poissonCdf|uniformPdf|uniformCdf|sort|quickselect|sum|min|max|length|size|zeros|ones|linspace|sqrt|abs|sin|cos|tan|log|log10|log2|exp|round|floor|ceil|mod|rem|plotHist|scatter|saveSvg|disp)(?=\\s*\\()"
+    },
+    "constants": {
+      "name": "constant.language.istat",
+      "match": "\\b(true|false|pi|e|inf|Inf|nan|NaN)\\b"
+    },
+    "keywords": {
+      "name": "keyword.control.istat",
+      "match": "\\b(if|elseif|else|endif|for|endfor|while|endwhile|function|endfunction|end|break|continue)\\b"
+    },
+    "numbers": {
+      "name": "constant.numeric.istat",
+      "match": "(?<![\\w.])(?:\\d+(?:\\.\\d+)?|\\.\\d+)(?:[eE][+-]?\\d+)?"
+    },
+    "operators": {
+      "name": "keyword.operator.istat",
+      "match": "\\.\\*|\\./|\\.\\^|==|!=|~=|<=|>=|&&|\\|\\||[+*/^=<>!~&|:-]"
+    }
+  }
+}

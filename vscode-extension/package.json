@@ -1,0 +1,54 @@
+{
+  "name": "istat-language-support",
+  "displayName": "iStat Language Support",
+  "description": "Syntax highlighting, snippets, and autocomplete for iStat scripts.",
+  "version": "0.1.0",
+  "publisher": "istat",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets"
+  ],
+  "keywords": [
+    "istat",
+    "statistics",
+    "language",
+    "syntax",
+    "autocomplete"
+  ],
+  "main": "./extension.cjs",
+  "activationEvents": [
+    "onLanguage:istat"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "istat",
+        "aliases": [
+          "iStat",
+          "istat"
+        ],
+        "extensions": [
+          ".istat"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "istat",
+        "scopeName": "source.istat",
+        "path": "./syntaxes/istat.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "istat",
+        "path": "./snippets/istat.json"
+      }
+    ]
+  }
+}
