@@ -3,18 +3,20 @@ import { z } from "zod";
 import { evaluate, createEnvironment, formatValue } from "../core/parser";
 import { writeFileSync } from "fs";
 import pc from "picocolors";
+import { isSvg } from "./svg";
 
 export default defineCommand({
   name: "eval",
   description: "Evaluates iStat expressions and scripts and prints the result",
   options: {
-    input: option(z.string(), {
+    input: option(z.string().optional(), {
       short: "i",
       description: 'Expression or code to execute (e.g. "x = 1:5; mean(x)")',
     }),
     json: option(z.boolean().optional(), {
       short: "j",
       description: "Output the result as formatted JSON",
+      argumentKind: "flag",
     }),
     svg: option(z.string().optional(), {
       short: "s",
@@ -31,19 +33,31 @@ export default defineCommand({
 
     try {
       const env = createEnvironment();
-      const result = evaluate(String(flags.input), env);
+      const result = evaluate(flags.input, env);
+      const isJson = flags.json === true;
+      const svg = isSvg(result.lastValue) ? result.lastValue : undefined;
+      const svgPath = flags.svg && svg ? flags.svg : undefined;
 
-      // If --svg flag is given and lastValue is SVG
-      if (flags.svg && typeof result.lastValue === "string" && result.lastValue.includes("<svg")) {
-        writeFileSync(flags.svg, result.lastValue, "utf-8");
-        console.log(pc.green(`✅ Chart SVG saved to ${pc.bold(flags.svg)}`));
+      if (flags.svg && !svg) {
+        console.warn(
+          pc.yellow(
+            "⚠️  --svg was provided, but the last result is not SVG markup; no file was written."
+          )
+        );
       }
 
-      const isJson =
-        flags.json === true ||
-        String(flags.json) === "true" ||
-        process.argv.includes("--json") ||
-        process.argv.includes("-j");
+      if (svgPath && svg) {
+        try {
+          writeFileSync(svgPath, svg, "utf-8");
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          console.error(pc.red(`❌ Could not write SVG to ${pc.bold(svgPath)}: ${message}`));
+          process.exit(1);
+        }
+        if (isJson) {
+          console.error(pc.green(`✅ Chart SVG saved to ${pc.bold(svgPath)}`));
+        }
+      }
 
       if (isJson) {
         console.log(
@@ -51,6 +65,7 @@ export default defineCommand({
             {
               input: flags.input,
               result: result.lastValue,
+              ...(svgPath ? { svg: svgPath } : {}),
               variables: Object.fromEntries(env.getVariables()),
             },
             null,
@@ -61,17 +76,28 @@ export default defineCommand({
       }
 
       console.log(`\n${pc.cyan(pc.bold("📥 Input:"))} ${pc.gray(flags.input)}`);
-      if (result.outputs.length > 0) {
-        for (const out of result.outputs) {
+      const outputs = svgPath
+        ? result.outputs.filter((out) => !isSvg(out.value))
+        : result.outputs;
+      if (outputs.length > 0) {
+        for (const out of outputs) {
           console.log(pc.yellow(out.formatted));
         }
-      } else {
+      } else if (!svgPath) {
         console.log(
           `${pc.green(pc.bold("🔍 Result:"))} ${pc.yellow(pc.bold(formatValue(result.lastValue)))}\n`
         );
       }
+
+      if (svgPath) {
+        console.log(pc.green(`✅ Chart SVG saved to ${pc.bold(svgPath)}`));
+      }
     } catch (error: any) {
-      const heading = error.location ? "❌ Syntax Error:" : "❌ Execution Error:";
+      const heading = error.code
+        ? "❌ File Error:"
+        : error.location
+          ? "❌ Syntax Error:"
+          : "❌ Execution Error:";
       console.error(`\n${pc.bold(pc.red(heading))}`);
       console.error(pc.red(error.message));
       process.exit(1);

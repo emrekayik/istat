@@ -13,12 +13,22 @@ export default defineCommand({
     }),
   },
   handler: ({ flags }) => {
-    const server = Bun.serve({
-      hostname: "127.0.0.1",
-      port: flags.port,
-      maxRequestBodySize: 100_000,
-      fetch: handleEditorRequest,
-    });
+    let server: ReturnType<typeof Bun.serve>;
+
+    try {
+      server = Bun.serve({
+        hostname: "127.0.0.1",
+        port: flags.port,
+        maxRequestBodySize: 100_000,
+        fetch: handleEditorRequest,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(
+        pc.red(`❌ Could not start iStat Studio on 127.0.0.1:${flags.port}: ${message}`)
+      );
+      process.exit(1);
+    }
 
     console.log(`\n${pc.bold(pc.magenta("iStat Studio"))}`);
     console.log(`Open ${pc.cyan(server.url.href)} in your browser.`);

@@ -1,10 +1,11 @@
 {
   "name": "istat",
+  "version": "0.1.0",
   "module": "src/index.ts",
   "type": "module",
   "private": true,
   "bin": {
-    "istat": "./src/cli/index.ts"
+    "istat": "./dist/index.js"
   },
   "scripts": {
     "typecheck": "bun check",
@@ -23,6 +24,7 @@
   },
   "dependencies": {
     "@bunli/core": "^0.9.1",
+    "@opentui/core": "0.1.97",
     "ace-builds": "^1.45.2",
     "marked": "^18.1.3",
     "peggy": "^5.1.1",

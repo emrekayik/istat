@@ -6,6 +6,7 @@
       "name": "istat",
       "dependencies": {
         "@bunli/core": "^0.9.1",
+        "@opentui/core": "0.1.97",
         "ace-builds": "^1.45.2",
         "marked": "^18.1.3",
         "peggy": "^5.1.1",

@@ -3,18 +3,32 @@ import * as readline from "readline";
 import { evaluate, createEnvironment } from "../core/parser";
 import pc from "picocolors";
 
+export function createReplInterface(
+  input: NodeJS.ReadableStream & { readonly isTTY?: boolean } = process.stdin,
+  output: NodeJS.WritableStream = process.stdout
+): readline.Interface {
+  return readline.createInterface({
+    input,
+    output,
+    prompt: `${pc.bold(pc.cyan("istat"))} ${pc.magenta("❯")} `,
+    historySize: 1000,
+    removeHistoryDuplicates: true,
+    terminal: input.isTTY === true,
+  });
+}
+
 export default defineCommand({
   name: "repl",
   description: "Starts the interactive statistical language iStat REPL environment",
-  handler: () => {
+  handler: async () => {
     const env = createEnvironment();
+    if (process.stdin.isTTY && process.stdout.isTTY) {
+      const { startReplTui } = await import("./repl-tui");
+      await startReplTui(env);
+      return;
+    }
 
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-      prompt: `${pc.bold(pc.cyan("istat"))} ${pc.magenta("❯")} `,
-      historySize: 1000,
-    });
+    const rl = createReplInterface();
 
     printBanner();
     rl.prompt();
@@ -71,7 +85,6 @@ export default defineCommand({
       rl.prompt();
     }).on("close", () => {
       console.log(pc.gray("\nSee you later! 👋"));
-      process.exit(0);
     });
   },
 });

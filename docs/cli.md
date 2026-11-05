@@ -40,7 +40,9 @@ Options:
 | `-j, --json` | Print the input, last result, and variables as JSON |
 | `-s, --svg <path>` | Save the last result as an SVG when it is SVG markup |
 
-For example, `bun run istat eval -i 'x = [1, 2, 2, 3]; plotHist(x, 4, "Counts")' --svg histogram.svg` evaluates the chart expression and writes its SVG to `histogram.svg`.
+For example, `bun run istat eval -i 'x = [1, 2, 2, 3]; plotHist(x, 4, "Counts")' --svg histogram.svg` evaluates the chart expression and writes its SVG to `histogram.svg`. The saved markup is not echoed to the terminal. If the last result is not SVG markup, iStat prints a warning and writes no file.
+
+With `--json`, the saved path is included as an `svg` field and the save confirmation is written to stderr, so stdout remains valid JSON.
 
 ## `run`
 
@@ -59,6 +61,8 @@ Options:
 | `-f, --file <path>` | Script file to execute |
 | `-s, --svg <path>` | Save the last result as an SVG when it is SVG markup |
 
+As with `eval`, saved SVG markup is omitted from the normal output, and `--svg` warns instead of writing a file when the last result is not SVG.
+
 ## `repl`
 
 Start a persistent interactive session:
@@ -67,7 +71,12 @@ Start a persistent interactive session:
 bun run istat repl
 ```
 
-Enter one or more expressions at the `iStat>` prompt. Built-in REPL commands:
+When launched in a terminal, the REPL opens an OpenTUI screen with a scrollable
+session transcript and an editable input. Up/down recalls commands, Page Up/Down
+scrolls the transcript, and Ctrl+C exits. When input is piped or the terminal
+interface is unavailable, the REPL uses the line-oriented prompt.
+
+Built-in REPL commands:
 
 | Command | Description |
 | --- | --- |
@@ -76,9 +85,13 @@ Enter one or more expressions at the `iStat>` prompt. Built-in REPL commands:
 | `help`, `?` | Print the REPL help |
 | `exit`, `quit` | Leave the REPL |
 
+## Output formats
+
+The CLI framework formats its built-in output, such as `--help`, `--version`, and command errors, as readable text in a terminal and as JSON when stdout is piped. Pass the global `--format json|yaml|md|toon` flag to choose explicitly. The `eval --json` flag is separate: it formats the evaluation result itself.
+
 ## Error behavior
 
-The CLI reports parse and runtime errors and exits with a non-zero status for failed `eval` and `run` commands. A missing script file is reported as a file-not-found error.
+The CLI reports parse and runtime errors and exits with a non-zero status for failed `eval` and `run` commands. A missing input, file path, or script file is reported as a clear error with a non-zero status.
 
 ## Script example
 
