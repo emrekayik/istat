@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as istat from "../istat";
+import type { ChartInfo } from "./charts";
 import type {
   Program,
   Statement,
@@ -27,6 +28,7 @@ export interface ExecutionResult {
 export class Environment {
   private variables = new Map<string, any>();
   private functions = new Map<string, (...args: any[]) => any>();
+  private charts = new Map<string, ChartInfo>();
 
   constructor(private readonly parent?: Environment) {
     if (!parent) {
@@ -36,6 +38,26 @@ export class Environment {
 
   createChild(): Environment {
     return new Environment(this);
+  }
+
+  /** Stores structured chart data alongside the SVG string produced by a plot function. */
+  registerChart(chart: ChartInfo): void {
+    if (this.parent) {
+      this.parent.registerChart(chart);
+      return;
+    }
+    this.charts.set(chart.svg, chart);
+  }
+
+  /** Returns the structured chart that produced an SVG string, when available. */
+  getChart(svg: unknown): ChartInfo | undefined {
+    if (typeof svg !== "string") return undefined;
+    return this.charts.get(svg) ?? this.parent?.getChart(svg);
+  }
+
+  /** Returns every chart generated in this session. */
+  getCharts(): ChartInfo[] {
+    return this.parent ? this.parent.getCharts() : [...this.charts.values()];
   }
 
   set(name: string, value: any): void {
@@ -307,14 +329,18 @@ export class Environment {
       const bins = isBins
         ? dataOrBins
         : istat.histogram(toArray(dataOrBins), numBins ? { bins: numBins } : {});
-      return istat.histogramToSvg(bins, { title: chartTitle });
+      const svg = istat.histogramToSvg(bins, { title: chartTitle });
+      this.registerChart({ kind: "histogram", title: chartTitle, bins, svg });
+      return svg;
     });
 
     this.registerFunction("scatter", (x, y, title?: string) => {
       const ax = toArray(x);
       const ay = toArray(y);
       const points: [number, number][] = ax.map((v, i) => [v, ay[i] ?? 0]);
-      return istat.scatterToSvg(points, { title });
+      const svg = istat.scatterToSvg(points, { title });
+      this.registerChart({ kind: "scatter", title, points, svg });
+      return svg;
     });
 
     this.registerFunction("saveSvg", (filepath: string, svgContent: string) => {
