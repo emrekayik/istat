@@ -10,6 +10,7 @@
     "typecheck": "bun check",
     "dev": "bunli dev",
     "build": "bunli build && bun run scripts/copy-runtime-assets.ts",
+    "build:library": "bun build src/istat/index.ts --outdir dist/istat --target=node --external xlsx && tsc --ignoreConfig src/istat/index.ts --declaration --emitDeclarationOnly --outDir dist/istat/types --target ESNext --module ESNext --moduleResolution bundler --strict --skipLibCheck --types bun",
     "test": "bun test",
     "istat": "bun run src/index.ts"
   },

@@ -1,0 +1,59 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Check release version
+        run: test "$GITHUB_REF_NAME" = "v$(node -p 'require("./packages/istat/package.json").version')"
+
+      - name: Verify
+        run: |
+          bun run typecheck
+          bun test
+
+      - name: Build CLI and library packages
+        run: |
+          bun run build
+          bun run build:library
+          test -f dist/istat/types/index.d.ts
+          mkdir -p dist/packages
+          cp packages/istat/package.json dist/istat/package.json
+          cp packages/istat/README.md dist/istat/README.md
+          mkdir -p dist/istat/docs
+          cp docs/library.md dist/istat/docs/library.md
+          npm pack ./dist/istat --pack-destination ./dist/packages
+          extension_version=$(node -p "require('./vscode-extension/package.json').version")
+          cd vscode-extension
+          npx --yes @vscode/vsce package --out "../dist/packages/istat-language-support-${extension_version}.vsix"
+          cd ..
+          tar -czf "dist/packages/istat-cli-${GITHUB_REF_NAME}.tar.gz" -C dist index.js grammar.peggy public docs
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/packages/* --generate-notes

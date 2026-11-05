@@ -1,0 +1,26 @@
+{
+  "name": "istat-statistics",
+  "version": "0.1.0",
+  "description": "Statistical and numerical computing library",
+  "type": "module",
+  "main": "./index.js",
+  "types": "./types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "import": "./index.js"
+    }
+  },
+  "files": [
+    "index.js",
+    "types",
+    "docs",
+    "README.md"
+  ],
+  "dependencies": {
+    "xlsx": "^0.18.5"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

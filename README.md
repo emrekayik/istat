@@ -62,10 +62,15 @@ See the [library reference](docs/library.md) for the exported modules and API ov
 ## Development
 
 ```sh
-bun run test       # Run tests
-bun run typecheck  # Type-check the project
-bun run build      # Build the CLI
+bun run test          # Run tests
+bun run typecheck     # Type-check the project
+bun run build         # Build the CLI
+bun run build:library # Build the distributable statistics library
 ```
+
+GitHub Actions runs checks and creates CLI, library (`.tgz`), and VS Code (`.vsix`)
+artifacts for pushes and pull requests. Push a tag matching the library version
+(for example, `v0.1.0`) to create a GitHub Release with those packages attached.
 
 ## Project layout
 
