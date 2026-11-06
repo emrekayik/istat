@@ -122,145 +122,154 @@ export class Environment {
     this.registerFunction("mean", (data) => istat.mean(toArray(data)));
     this.registerFunction("median", (data) => istat.median(toArray(data)));
     this.registerFunction("variance", (data, sample = true) =>
-      istat.variance(toArray(data), Boolean(sample))
+      istat.variance(toArray(data), Boolean(sample)),
     );
     this.registerFunction("var", (data, sample = true) =>
-      istat.variance(toArray(data), Boolean(sample))
+      istat.variance(toArray(data), Boolean(sample)),
     );
     this.registerFunction("stdev", (data, sample = true) =>
-      istat.stdev(toArray(data), Boolean(sample))
+      istat.stdev(toArray(data), Boolean(sample)),
     );
     this.registerFunction("std", (data, sample = true) =>
-      istat.stdev(toArray(data), Boolean(sample))
+      istat.stdev(toArray(data), Boolean(sample)),
     );
     this.registerFunction("quantile", (data, p, method = "linear") =>
-      istat.quantile(toArray(data), Number(p), { method: method as any })
+      istat.quantile(toArray(data), Number(p), { method: method as any }),
     );
     this.registerFunction("summary", (data) => istat.summary(toArray(data)));
     this.registerFunction("readData", (path, sheet) =>
-      istat.readData(String(path), sheet === undefined ? {} : { sheet: sheet as string | number })
+      istat.readData(
+        String(path),
+        sheet === undefined ? {} : { sheet: sheet as string | number },
+      ),
     );
     this.registerFunction("readCsv", (path, header = true) =>
-      istat.readCsv(String(path), Boolean(header))
+      istat.readCsv(String(path), Boolean(header)),
     );
     this.registerFunction("readXlsx", (path, sheet, header = true) =>
       istat.readXlsx(
         String(path),
         sheet === undefined ? undefined : (sheet as string | number),
-        Boolean(header)
-      )
+        Boolean(header),
+      ),
     );
     this.registerFunction("readJson", (path) => istat.readJson(String(path)));
     this.registerFunction("writeData", (path, data, header = true) =>
-      istat.writeData(String(path), data, { header: Boolean(header) })
+      istat.writeData(String(path), data, { header: Boolean(header) }),
     );
     this.registerFunction("writeCsv", (path, data, header = true) =>
-      istat.writeCsv(String(path), data, Boolean(header))
+      istat.writeCsv(String(path), data, Boolean(header)),
     );
     this.registerFunction("writeJson", (path, data) =>
-      istat.writeJson(String(path), data)
+      istat.writeJson(String(path), data),
     );
     this.registerFunction("writeXlsx", (path, data, sheet?, header = true) =>
       istat.writeXlsx(String(path), data, {
         sheet: sheet === undefined ? undefined : String(sheet),
         header: Boolean(header),
-      })
+      }),
     );
     this.registerFunction("column", (rows, key) =>
-      istat.column(rows, key as string | number)
+      istat.column(rows, key as string | number),
     );
     this.registerFunction("now", () => istat.now());
     this.registerFunction("tic", () => istat.tic());
     this.registerFunction("toc", (startTime) => istat.toc(Number(startTime)));
-    this.registerFunction("benchmark", (callback, iterations = 100, warmup = 1) =>
-      istat.benchmark(callback, Number(iterations), Number(warmup))
+    this.registerFunction(
+      "benchmark",
+      (callback, iterations = 100, warmup = 1) =>
+        istat.benchmark(callback, Number(iterations), Number(warmup)),
     );
     this.registerFunction("mode", (data) => istat.mode(toArray(data)));
     this.registerFunction("skewness", (data) => istat.skewness(toArray(data)));
     this.registerFunction("kurtosis", (data) => istat.kurtosis(toArray(data)));
     this.registerFunction("zscore", (data) => istat.zscore(toArray(data)));
     this.registerFunction("covarianceMatrix", (data, sample = true) =>
-      istat.covarianceMatrix(data, Boolean(sample))
+      istat.covarianceMatrix(data, Boolean(sample)),
     );
     this.registerFunction("isnan", (data) => istat.isnan(data));
     this.registerFunction("isna", (data) => istat.isna(data));
     this.registerFunction("dropna", (data) =>
-      istat.dropna(toUnknownArray(data))
+      istat.dropna(toUnknownArray(data)),
     );
     this.registerFunction("fillna", (data, value) =>
-      istat.fillna(toUnknownArray(data), Number(value))
+      istat.fillna(toUnknownArray(data), Number(value)),
     );
     this.registerFunction("nancount", (data) =>
-      istat.nancount(toUnknownArray(data))
+      istat.nancount(toUnknownArray(data)),
     );
     this.registerFunction("nanmean", (data) =>
-      istat.nanmean(toUnknownArray(data))
+      istat.nanmean(toUnknownArray(data)),
     );
     this.registerFunction("nansum", (data) =>
-      istat.nansum(toUnknownArray(data))
+      istat.nansum(toUnknownArray(data)),
     );
     this.registerFunction("nanmin", (data) =>
-      istat.nanmin(toUnknownArray(data))
+      istat.nanmin(toUnknownArray(data)),
     );
     this.registerFunction("nanmax", (data) =>
-      istat.nanmax(toUnknownArray(data))
+      istat.nanmax(toUnknownArray(data)),
     );
     this.registerFunction("nanmedian", (data) =>
-      istat.nanmedian(toUnknownArray(data))
+      istat.nanmedian(toUnknownArray(data)),
     );
     this.registerFunction("nanvariance", (data, sample = true) =>
-      istat.nanvariance(toUnknownArray(data), Boolean(sample))
+      istat.nanvariance(toUnknownArray(data), Boolean(sample)),
     );
     this.registerFunction("nanvar", (data, sample = true) =>
-      istat.nanvariance(toUnknownArray(data), Boolean(sample))
+      istat.nanvariance(toUnknownArray(data), Boolean(sample)),
     );
     this.registerFunction("nanstdev", (data, sample = true) =>
-      istat.nanstdev(toUnknownArray(data), Boolean(sample))
+      istat.nanstdev(toUnknownArray(data), Boolean(sample)),
     );
     this.registerFunction("nanstd", (data, sample = true) =>
-      istat.nanstdev(toUnknownArray(data), Boolean(sample))
+      istat.nanstdev(toUnknownArray(data), Boolean(sample)),
     );
     this.registerFunction("nanquantile", (data, p, method = "linear") =>
       istat.nanquantile(toUnknownArray(data), Number(p), {
         method: method as any,
-      })
+      }),
     );
     this.registerFunction("histogram", (data, bins = "sturges") =>
-      istat.histogram(toArray(data), { bins: typeof bins === "number" ? bins : (bins as any) })
+      istat.histogram(toArray(data), {
+        bins: typeof bins === "number" ? bins : (bins as any),
+      }),
     );
     this.registerFunction("hist", (data, bins = "sturges") =>
-      istat.histogram(toArray(data), { bins: typeof bins === "number" ? bins : (bins as any) })
+      istat.histogram(toArray(data), {
+        bins: typeof bins === "number" ? bins : (bins as any),
+      }),
     );
 
     // --- istat Correlation ---
     this.registerFunction("covariance", (x, y, sample = true) =>
-      istat.covariance(toArray(x), toArray(y), Boolean(sample))
+      istat.covariance(toArray(x), toArray(y), Boolean(sample)),
     );
     this.registerFunction("cov", (x, y, sample = true) =>
-      istat.covariance(toArray(x), toArray(y), Boolean(sample))
+      istat.covariance(toArray(x), toArray(y), Boolean(sample)),
     );
     this.registerFunction("pearson", (x, y) =>
-      istat.pearson(toArray(x), toArray(y))
+      istat.pearson(toArray(x), toArray(y)),
     );
     this.registerFunction("corr", (x, y) =>
-      istat.pearson(toArray(x), toArray(y))
+      istat.pearson(toArray(x), toArray(y)),
     );
     this.registerFunction("spearman", (x, y) =>
-      istat.spearman(toArray(x), toArray(y))
+      istat.spearman(toArray(x), toArray(y)),
     );
 
     // --- istat Regression ---
     this.registerFunction("linreg", (x, y) =>
-      istat.linearRegression(toArray(x), toArray(y))
+      istat.linearRegression(toArray(x), toArray(y)),
     );
     this.registerFunction("linearRegression", (x, y) =>
-      istat.linearRegression(toArray(x), toArray(y))
+      istat.linearRegression(toArray(x), toArray(y)),
     );
     this.registerFunction("polyfit", (x, y, degree = 2) =>
-      istat.polynomialRegression(toArray(x), toArray(y), Number(degree))
+      istat.polynomialRegression(toArray(x), toArray(y), Number(degree)),
     );
     this.registerFunction("polyreg", (x, y, degree = 2) =>
-      istat.polynomialRegression(toArray(x), toArray(y), Number(degree))
+      istat.polynomialRegression(toArray(x), toArray(y), Number(degree)),
     );
 
     // --- Matrix and Linear Algebra ---
@@ -276,36 +285,50 @@ export class Environment {
 
     // --- Probability distributions ---
     this.registerFunction("normalPdf", (x, mean = 0, sd = 1) =>
-      istat.normalPdf(Number(x), Number(mean), Number(sd))
+      istat.normalPdf(Number(x), Number(mean), Number(sd)),
     );
     this.registerFunction("normalCdf", (x, mean = 0, sd = 1) =>
-      istat.normalCdf(Number(x), Number(mean), Number(sd))
+      istat.normalCdf(Number(x), Number(mean), Number(sd)),
     );
     this.registerFunction("binomialPmf", (k, n, p) =>
-      istat.binomialPmf(Number(k), Number(n), Number(p))
+      istat.binomialPmf(Number(k), Number(n), Number(p)),
     );
     this.registerFunction("binomialCdf", (k, n, p) =>
-      istat.binomialCdf(Number(k), Number(n), Number(p))
+      istat.binomialCdf(Number(k), Number(n), Number(p)),
     );
     this.registerFunction("poissonPmf", (k, rate) =>
-      istat.poissonPmf(Number(k), Number(rate))
+      istat.poissonPmf(Number(k), Number(rate)),
     );
     this.registerFunction("poissonCdf", (k, rate) =>
-      istat.poissonCdf(Number(k), Number(rate))
+      istat.poissonCdf(Number(k), Number(rate)),
     );
     this.registerFunction("uniformPdf", (x, min = 0, max = 1) =>
-      istat.uniformPdf(Number(x), Number(min), Number(max))
+      istat.uniformPdf(Number(x), Number(min), Number(max)),
     );
     this.registerFunction("uniformCdf", (x, min = 0, max = 1) =>
-      istat.uniformCdf(Number(x), Number(min), Number(max))
+      istat.uniformCdf(Number(x), Number(min), Number(max)),
+    );
+
+    // --- istat Random ---
+    this.registerFunction("runif", (min = 0, max = 1) =>
+      istat.runif(Number(min), Number(max)),
+    );
+    this.registerFunction("rnormSingle", (mean = 0, std = 1) =>
+      istat.rnormSingle(Number(mean), Number(std)),
+    );
+    this.registerFunction("rnorm", (n, mean = 0, std = 1) =>
+      istat.rnorm(Number(n), Number(mean), Number(std)),
+    );
+    this.registerFunction("runifArray", (n, min = 0, max = 1) =>
+      istat.runifArray(Number(n), Number(min), Number(max)),
     );
 
     // --- istat Sorting ---
     this.registerFunction("sort", (data, asc = true) =>
-      istat.numericSort(toArray(data), Boolean(asc))
+      istat.numericSort(toArray(data), Boolean(asc)),
     );
     this.registerFunction("quickselect", (data, k) =>
-      istat.quickselect([...toArray(data)], Number(k))
+      istat.quickselect([...toArray(data)], Number(k)),
     );
 
     // --- Math & Array Utilities ---
@@ -318,7 +341,7 @@ export class Environment {
     this.registerFunction("min", (data) => Math.min(...toArray(data)));
     this.registerFunction("max", (data) => Math.max(...toArray(data)));
     this.registerFunction("length", (data) =>
-      Array.isArray(data) ? data.length : 1
+      Array.isArray(data) ? data.length : 1,
     );
     this.registerFunction("size", (data) => {
       if (!Array.isArray(data)) return [1, 1];
@@ -344,15 +367,18 @@ export class Environment {
       return Array.from({ length: rows }, () => new Array(cols).fill(1));
     });
 
-    this.registerFunction("linspace", (start: number, end: number, num = 100) => {
-      const n = Math.max(2, Math.round(Number(num)));
-      const step = (end - start) / (n - 1);
-      const result: number[] = [];
-      for (let i = 0; i < n; i++) {
-        result.push(start + i * step);
-      }
-      return result;
-    });
+    this.registerFunction(
+      "linspace",
+      (start: number, end: number, num = 100) => {
+        const n = Math.max(2, Math.round(Number(num)));
+        const step = (end - start) / (n - 1);
+        const result: number[] = [];
+        for (let i = 0; i < n; i++) {
+          result.push(start + i * step);
+        }
+        return result;
+      },
+    );
 
     // Vectorizable Math functions
     const unaryMath = (fn: (x: number) => number) => (val: any) => {
@@ -374,23 +400,35 @@ export class Environment {
     this.registerFunction("round", unaryMath(Math.round));
     this.registerFunction("floor", unaryMath(Math.floor));
     this.registerFunction("ceil", unaryMath(Math.ceil));
-    this.registerFunction("mod", (a, b) => ((Number(a) % Number(b)) + Number(b)) % Number(b));
+    this.registerFunction(
+      "mod",
+      (a, b) => ((Number(a) % Number(b)) + Number(b)) % Number(b),
+    );
     this.registerFunction("rem", (a, b) => Number(a) % Number(b));
 
     // --- Visualization & I/O ---
-    this.registerFunction("plotHist", (dataOrBins, binsCountOrTitle?: any, title?: string) => {
-      const first = Array.isArray(dataOrBins) ? dataOrBins[0] : undefined;
-      const isBins = typeof first === "object" && first !== null && "count" in first;
-      const chartTitle = typeof binsCountOrTitle === "string" ? binsCountOrTitle : title;
-      const numBins = typeof binsCountOrTitle === "number" ? binsCountOrTitle : undefined;
+    this.registerFunction(
+      "plotHist",
+      (dataOrBins, binsCountOrTitle?: any, title?: string) => {
+        const first = Array.isArray(dataOrBins) ? dataOrBins[0] : undefined;
+        const isBins =
+          typeof first === "object" && first !== null && "count" in first;
+        const chartTitle =
+          typeof binsCountOrTitle === "string" ? binsCountOrTitle : title;
+        const numBins =
+          typeof binsCountOrTitle === "number" ? binsCountOrTitle : undefined;
 
-      const bins = isBins
-        ? dataOrBins
-        : istat.histogram(toArray(dataOrBins), numBins ? { bins: numBins } : {});
-      const svg = istat.histogramToSvg(bins, { title: chartTitle });
-      this.registerChart({ kind: "histogram", title: chartTitle, bins, svg });
-      return svg;
-    });
+        const bins = isBins
+          ? dataOrBins
+          : istat.histogram(
+              toArray(dataOrBins),
+              numBins ? { bins: numBins } : {},
+            );
+        const svg = istat.histogramToSvg(bins, { title: chartTitle });
+        this.registerChart({ kind: "histogram", title: chartTitle, bins, svg });
+        return svg;
+      },
+    );
 
     this.registerFunction("scatter", (x, y, title?: string) => {
       const ax = toArray(x);
@@ -417,7 +455,7 @@ export class Environment {
 
       if (xs.length !== ys.length) {
         throw new RangeError(
-          `plotLine: x and y must have equal lengths (x: ${xs.length}, y: ${ys.length})`
+          `plotLine: x and y must have equal lengths (x: ${xs.length}, y: ${ys.length})`,
         );
       }
 
@@ -433,7 +471,7 @@ export class Environment {
     const barChart = (
       labelsOrValues: any,
       valuesOrTitle?: any,
-      title?: string
+      title?: string,
     ) => {
       let labels: string[];
       let values: number[];
@@ -446,17 +484,24 @@ export class Environment {
         values = toArray(labelsOrValues);
         labels = values.map((_, index) => String(index + 1));
         chartTitle =
-          title ?? (typeof valuesOrTitle === "string" ? valuesOrTitle : undefined);
+          title ??
+          (typeof valuesOrTitle === "string" ? valuesOrTitle : undefined);
       }
 
       if (labels.length !== values.length) {
         throw new RangeError(
-          `bar: labels and values must have equal lengths (labels: ${labels.length}, values: ${values.length})`
+          `bar: labels and values must have equal lengths (labels: ${labels.length}, values: ${values.length})`,
         );
       }
 
       const svg = istat.barToSvg(labels, values, { title: chartTitle });
-      this.registerChart({ kind: "bar", title: chartTitle, labels, values, svg });
+      this.registerChart({
+        kind: "bar",
+        title: chartTitle,
+        labels,
+        values,
+        svg,
+      });
       return svg;
     };
 
@@ -482,12 +527,16 @@ class ContinueSignal extends Error {}
 function isTruthy(val: any): boolean {
   if (typeof val === "boolean") return val;
   if (typeof val === "number") return val !== 0 && !Number.isNaN(val);
-  if (Array.isArray(val)) return val.length > 0 && val.every((x) => isTruthy(x));
+  if (Array.isArray(val))
+    return val.length > 0 && val.every((x) => isTruthy(x));
   if (typeof val === "string") return val.length > 0;
   return Boolean(val);
 }
 
-function* iterateRange(node: RangeExpression, env: Environment): Generator<number> {
+function* iterateRange(
+  node: RangeExpression,
+  env: Environment,
+): Generator<number> {
   const start = Number(evalExpr(node.start, env));
   const end = Number(evalExpr(node.end, env));
   const step = node.step
@@ -496,7 +545,11 @@ function* iterateRange(node: RangeExpression, env: Environment): Generator<numbe
       ? 1
       : -1;
 
-  if (!Number.isFinite(start) || !Number.isFinite(end) || !Number.isFinite(step)) {
+  if (
+    !Number.isFinite(start) ||
+    !Number.isFinite(end) ||
+    !Number.isFinite(step)
+  ) {
     throw new RangeError("Range bounds and step must be finite numbers");
   }
   if (step === 0) throw new RangeError("Range step cannot be 0");
@@ -509,7 +562,9 @@ function* iterateRange(node: RangeExpression, env: Environment): Generator<numbe
   ) {
     yield Number(value.toFixed(10));
     if (value + step === value) {
-      throw new RangeError(`Range step ${step} is too small to advance from ${value}`);
+      throw new RangeError(
+        `Range step ${step} is too small to advance from ${value}`,
+      );
     }
   }
 }
@@ -538,7 +593,10 @@ function toLabelArray(data: any): string[] {
   throw new TypeError(`Expected an array of labels, got ${typeof data}`);
 }
 
-export function evaluate(program: Program, env = new Environment()): ExecutionResult {
+export function evaluate(
+  program: Program,
+  env = new Environment(),
+): ExecutionResult {
   let lastValue: any = undefined;
   const outputs: { name?: string; value: any; formatted: string }[] = [];
   let loopDepth = 0;
@@ -548,7 +606,7 @@ export function evaluate(program: Program, env = new Environment()): ExecutionRe
     env.registerFunction(stmt.name, (...args) => {
       if (args.length !== stmt.parameters.length) {
         throw new TypeError(
-          `Function '${stmt.name}' expects ${stmt.parameters.length} argument(s), got ${args.length}`
+          `Function '${stmt.name}' expects ${stmt.parameters.length} argument(s), got ${args.length}`,
         );
       }
 
@@ -571,7 +629,7 @@ export function evaluate(program: Program, env = new Environment()): ExecutionRe
 
       if (!localEnv.getVariables().has(stmt.output)) {
         throw new ReferenceError(
-          `Function '${stmt.name}' did not assign its output '${stmt.output}'`
+          `Function '${stmt.name}' did not assign its output '${stmt.output}'`,
         );
       }
       return localEnv.get(stmt.output);
@@ -589,10 +647,12 @@ export function evaluate(program: Program, env = new Environment()): ExecutionRe
   function executeStatement(stmt: Statement): any {
     switch (stmt.type) {
       case "BreakStatement":
-        if (loopDepth === 0) throw new SyntaxError("'break' can only be used inside a loop");
+        if (loopDepth === 0)
+          throw new SyntaxError("'break' can only be used inside a loop");
         throw new BreakSignal();
       case "ContinueStatement":
-        if (loopDepth === 0) throw new SyntaxError("'continue' can only be used inside a loop");
+        if (loopDepth === 0)
+          throw new SyntaxError("'continue' can only be used inside a loop");
         throw new ContinueSignal();
 
       case "AssignmentStatement": {
@@ -680,7 +740,9 @@ export function evaluate(program: Program, env = new Environment()): ExecutionRe
         try {
           while (isTruthy(evalExpr(stmt.test, env))) {
             if (++iterations > maxIterations) {
-              throw new RangeError("Maximum loop iterations (1,000,000) exceeded");
+              throw new RangeError(
+                "Maximum loop iterations (1,000,000) exceeded",
+              );
             }
             try {
               loopVal = executeStatementList(stmt.body);
@@ -746,10 +808,12 @@ function evaluateExpression(node: Expression, env: Environment): any {
     }
 
     case "ArrayLiteral": {
-      const matrix = node.rows.map((row) => row.flatMap((item) => {
-        const val = evalExpr(item, env);
-        return Array.isArray(val) ? val : [val];
-      }));
+      const matrix = node.rows.map((row) =>
+        row.flatMap((item) => {
+          const val = evalExpr(item, env);
+          return Array.isArray(val) ? val : [val];
+        }),
+      );
       return matrix.length === 1 ? matrix[0]! : matrix;
     }
 
@@ -784,7 +848,9 @@ function evaluateExpression(node: Expression, env: Environment): any {
       if (node.callee.type === "PropertyAccess") {
         const obj = evalExpr(node.callee.object, env);
         if (obj === null || obj === undefined) {
-          throw new TypeError(`Cannot call method '${node.callee.property}' of ${obj}`);
+          throw new TypeError(
+            `Cannot call method '${node.callee.property}' of ${obj}`,
+          );
         }
         const method = obj[node.callee.property];
         if (typeof method !== "function") {
@@ -807,7 +873,9 @@ function evaluateExpression(node: Expression, env: Environment): any {
             validateIndex(idx);
             const val = target[idx - 1];
             if (val === undefined) {
-              throw new RangeError(`Index ${idx} out of bounds (valid range: 1-${target.length})`);
+              throw new RangeError(
+                `Index ${idx} out of bounds (valid range: 1-${target.length})`,
+              );
             }
             return val;
           }
@@ -818,11 +886,15 @@ function evaluateExpression(node: Expression, env: Environment): any {
             validateIndex(c);
             const row = target[r - 1];
             if (!Array.isArray(row)) {
-              throw new RangeError(`Row index ${r} out of bounds (valid range: 1-${target.length})`);
+              throw new RangeError(
+                `Row index ${r} out of bounds (valid range: 1-${target.length})`,
+              );
             }
             const val = row[c - 1];
             if (val === undefined) {
-              throw new RangeError(`Column index ${c} out of bounds (valid range: 1-${row.length})`);
+              throw new RangeError(
+                `Column index ${c} out of bounds (valid range: 1-${row.length})`,
+              );
             }
             return val;
           }
@@ -850,7 +922,9 @@ function evaluateExpression(node: Expression, env: Environment): any {
         // Language indices are 1-based.
         const val = obj[idx - 1];
         if (val === undefined) {
-          throw new RangeError(`Index ${idx} out of bounds (valid range: 1-${obj.length})`);
+          throw new RangeError(
+            `Index ${idx} out of bounds (valid range: 1-${obj.length})`,
+          );
         }
         return val;
       }
@@ -861,11 +935,15 @@ function evaluateExpression(node: Expression, env: Environment): any {
         validateIndex(c);
         const row = obj[r - 1];
         if (!Array.isArray(row)) {
-          throw new RangeError(`Row index ${r} out of bounds (valid range: 1-${obj.length})`);
+          throw new RangeError(
+            `Row index ${r} out of bounds (valid range: 1-${obj.length})`,
+          );
         }
         const val = row[c - 1];
         if (val === undefined) {
-          throw new RangeError(`Column index ${c} out of bounds (valid range: 1-${row.length})`);
+          throw new RangeError(
+            `Column index ${c} out of bounds (valid range: 1-${row.length})`,
+          );
         }
         return val;
       }
@@ -875,7 +953,9 @@ function evaluateExpression(node: Expression, env: Environment): any {
     case "PropertyAccess": {
       const obj = evalExpr(node.object, env);
       if (obj === null || obj === undefined) {
-        throw new TypeError(`Cannot read property '${node.property}' of ${obj}`);
+        throw new TypeError(
+          `Cannot read property '${node.property}' of ${obj}`,
+        );
       }
       return obj[node.property];
     }
@@ -888,7 +968,7 @@ function evaluateExpression(node: Expression, env: Environment): any {
 function validateIndex(index: number): void {
   if (!Number.isInteger(index) || index < 1) {
     throw new RangeError(
-      `Invalid index ${index}: indices must be positive integers (iStat uses 1-based indexing)`
+      `Invalid index ${index}: indices must be positive integers (iStat uses 1-based indexing)`,
     );
   }
 }
@@ -900,17 +980,30 @@ function applyBinaryOp(op: string, left: any, right: any): any {
   if (op === "*" && isArrL && isArrR) {
     return istat.matmul(left, right);
   }
-  if (op === "/" && isArrL && isArrR && isMatrixValue(left) && isMatrixValue(right)) {
+  if (
+    op === "/" &&
+    isArrL &&
+    isArrR &&
+    isMatrixValue(left) &&
+    isMatrixValue(right)
+  ) {
     return istat.matmul(left, istat.inverse(right));
   }
-  if (op === "^" && isArrL && isMatrixValue(left) && typeof right === "number") {
+  if (
+    op === "^" &&
+    isArrL &&
+    isMatrixValue(left) &&
+    typeof right === "number"
+  ) {
     return istat.matrixPower(left, right);
   }
 
   // Vectorized element-wise operations
   if (isArrL && isArrR) {
     if (left.length !== right.length) {
-      throw new RangeError(`Vector dimension mismatch: (${left.length}) vs (${right.length})`);
+      throw new RangeError(
+        `Vector dimension mismatch: (${left.length}) vs (${right.length})`,
+      );
     }
     return left.map((val: any, i: number) => applyBinaryOp(op, val, right[i]));
   }
@@ -983,8 +1076,9 @@ export function formatValue(val: any, indent = "  "): string {
     if (val.length === 0) return "[]";
     if (Array.isArray(val[0])) {
       // 2D Matrix
-      const rows = val.map((row: any[]) =>
-        `${indent}[ ${row.map((x: any) => (typeof x === "number" ? Number(x.toFixed(4)).toString() : String(x))).join(", ")} ]`
+      const rows = val.map(
+        (row: any[]) =>
+          `${indent}[ ${row.map((x: any) => (typeof x === "number" ? Number(x.toFixed(4)).toString() : String(x))).join(", ")} ]`,
       );
       return `[\n${rows.join(",\n")}\n]`;
     }
@@ -992,7 +1086,12 @@ export function formatValue(val: any, indent = "  "): string {
     const elements = val.map((x) => {
       if (typeof x === "number") return Number(x.toFixed(4)).toString();
       if (typeof x === "object" && x !== null) {
-        return `{ ${Object.entries(x).map(([k, v]) => `${k}: ${typeof v === "number" ? Number(v.toFixed(3)).toString() : v}`).join(", ")} }`;
+        return `{ ${Object.entries(x)
+          .map(
+            ([k, v]) =>
+              `${k}: ${typeof v === "number" ? Number(v.toFixed(3)).toString() : v}`,
+          )
+          .join(", ")} }`;
       }
       return String(x);
     });
@@ -1002,7 +1101,9 @@ export function formatValue(val: any, indent = "  "): string {
     return `[ ${elements.join(", ")} ]`;
   }
   if (typeof val === "object") {
-    const lines = Object.entries(val).map(([k, v]) => `${indent}${k}: ${formatValue(v, indent + "  ")}`);
+    const lines = Object.entries(val).map(
+      ([k, v]) => `${indent}${k}: ${formatValue(v, indent + "  ")}`,
+    );
     return `{\n${lines.join("\n")}\n}`;
   }
   return String(val);
