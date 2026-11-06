@@ -103,6 +103,7 @@ The interpreter provides:
 | Category | Functions |
 | --- | --- |
 | Descriptive statistics | `mean`, `median`, `variance` / `var`, `stdev` / `std`, `quantile`, `summary`, `histogram` / `hist`, `mode`, `skewness`, `kurtosis`, `zscore`, `covarianceMatrix` |
+| Missing data | `isnan`, `isna`, `dropna`, `fillna`, `nancount`, `nanmean`, `nanmedian`, `nansum`, `nanmin`, `nanmax`, `nanvariance` / `nanvar`, `nanstdev` / `nanstd`, `nanquantile` |
 | Correlation | `covariance` / `cov`, `pearson` / `corr`, `spearman` |
 | Regression | `linreg` / `linearRegression`, `polyfit` / `polyreg` |
 | Matrix and linear algebra | `transpose`, `matmul`, `dot`, `eye`, `diag`, `trace`, `det`, `inv`, `solve` |
@@ -111,7 +112,7 @@ The interpreter provides:
 | Arrays and arithmetic | `sum`, `min`, `max`, `length`, `size`, `zeros`, `ones`, `linspace`, `mod`, `rem` |
 | Math | `sqrt`, `abs`, `sin`, `cos`, `tan`, `log`, `log10`, `log2`, `exp`, `round`, `floor`, `ceil` |
 | Time and benchmarking | `now`, `tic`, `toc`, `benchmark` |
-| Charts and output | `plotHist`, `scatter`, `saveSvg`, `disp` |
+| Charts and output | `plotHist`, `plotLine`, `bar` / `plotBar`, `scatter`, `saveSvg`, `disp` |
 
 For matrix operands, `*` performs matrix multiplication (including dot product for two vectors), while `.*` is element-wise. `^` is matrix power for a square matrix and integer exponent. Matrix/vector dimensions must be compatible. Use `matmul`, `dot`, and `transpose` when you want the operation to be explicit.
 
@@ -128,6 +129,40 @@ mean(scores)
 ```
 
 Use `readCsv(path, header)` or `readXlsx(path, sheet, header)` to specify whether the first row contains headers. For XLSX files, `readXlsx` and `readData` accept a worksheet name or zero-based position as the `sheet` argument; it defaults to the first worksheet. `readJson(path)` returns the parsed JSON value. `column(rows, key)` extracts a named field from records or a column from array rows (numeric keys are 1-based). File and parse errors are reported to the caller.
+
+## Exporting data files
+
+`writeData(path, data, header)` chooses the output format from the extension: `.csv`, `.xlsx`/`.xls`, or `.json`. CSV and spreadsheet writers accept an array of records, an array of rows, or a single record; record keys become the header row. Pass `false` as the third argument to omit headers.
+
+```istat
+rows = readData("measurements.csv");
+writeData("clean.csv", rows);
+writeJson("summary.json", summary(column(rows, "score")));
+```
+
+Use `writeCsv(path, data, header)`, `writeXlsx(path, data, sheet, header)`, or `writeJson(path, data)` when you want to force a format. Each function returns a `Saved <FORMAT> to <path>` confirmation string.
+
+## Missing data
+
+`isnan(value)` reports NaN values, while `isna(value)` also treats `null` and `undefined` as missing. Both work element-wise on vectors and matrices. `dropna(data)` removes missing entries (or rows containing missing entries in a matrix), and `fillna(data, value)` replaces them.
+
+The `nan*` functions ignore missing values: `nancount`, `nanmean`, `nanmedian`, `nansum`, `nanmin`, `nanmax`, `nanvariance` / `nanvar`, `nanstdev` / `nanstd`, and `nanquantile`. `nanmean`, `nanmedian`, `nanvariance`, `nanstdev`, and `nanquantile` return `nan` when no valid values remain; `nansum` returns `0`; `nanmin` and `nanmax` throw an error.
+
+```istat
+values = [2, nan, 4, 6];
+clean = dropna(values);
+filled = fillna(values, 0);
+nanmean(values)
+```
+
+## Charts
+
+`plotHist(data, bins, title)` draws a histogram. `plotLine(y)` uses one-based indices for x, while `plotLine(x, y, title)` uses explicit coordinates. `bar(values, title)` labels bars `1..n`, and `bar(labels, values, title)` uses the supplied labels. `scatter(x, y, title)` draws points. Every chart function returns SVG markup, so it works with `saveSvg` and `--svg`, and the TUI registers the chart for its history and fullscreen view.
+
+```istat
+plotLine([1, 2, 3, 4], [3, 1, 4, 2], "Trend");
+bar(["A", "B", "C"], [4, 7, 2], "Counts")
+```
 
 ## Timing and benchmarking
 

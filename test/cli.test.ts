@@ -224,6 +224,49 @@ describe("iStat CLI", () => {
     expect(readFileSync(svgPath, "utf-8")).toContain("<svg");
   });
 
+  test("saves line and bar SVG output", async () => {
+    const scriptPath = join(tempDir, "line-bar.istat");
+    const svgPath = join(tempDir, "line-chart.svg");
+
+    writeFileSync(
+      scriptPath,
+      'plotLine([1, 2, 3], [3, 1, 4], "Trend");\n'
+    );
+    const line = await runCli(["run", scriptPath, "--svg", svgPath]);
+    expect(line.exitCode).toBe(0);
+    expect(line.stdout).toContain("Chart SVG saved");
+    expect(readFileSync(svgPath, "utf-8")).toContain("<polyline");
+
+    writeFileSync(
+      scriptPath,
+      'bar(["A", "B", "C"], [4, 7, 2], "Counts");\n'
+    );
+    const bar = await runCli(["run", scriptPath, "--svg", svgPath]);
+    expect(bar.exitCode).toBe(0);
+    expect(bar.stdout).toContain("Chart SVG saved");
+    expect(readFileSync(svgPath, "utf-8")).toContain("<rect");
+  });
+
+  test("writes data files from scripts", async () => {
+    const scriptPath = join(tempDir, "write-data.istat");
+    const csvPath = join(tempDir, "written.csv");
+    const jsonPath = join(tempDir, "written.json");
+
+    writeFileSync(
+      scriptPath,
+      `writeData(${JSON.stringify(csvPath)}, [1, 2, 3])\n` +
+        `writeData(${JSON.stringify(jsonPath)}, ["Ada", 9])\n`
+    );
+
+    const { stdout, stderr, exitCode } = await runCli(["run", scriptPath]);
+    expect(exitCode).toBe(0);
+    expect(stderr).toBe("");
+    expect(stdout).toContain("Saved CSV");
+    expect(stdout).toContain("Saved JSON");
+    expect(readFileSync(csvPath, "utf-8")).toBe("value\n1\n2\n3\n");
+    expect(JSON.parse(readFileSync(jsonPath, "utf-8"))).toEqual(["Ada", 9]);
+  });
+
   test("reports SVG write failures without blaming the script path", async () => {
     const svgPath = join(tempDir, "missing-dir", "histogram.svg");
     const evalResult = await runCli([

@@ -107,6 +107,33 @@ describe("iStat Language - Parser & Evaluator", () => {
     expect(env.get("standardized")[1]).toBe(0);
   });
 
+  it("provides missing-data and chart built-ins", () => {
+    const env = createEnvironment();
+    evaluate(
+      `
+        detected = isna([1, 0/0, 3]);
+        cleaned = dropna([1, 0/0, 3]);
+        filled = fillna([1, 0/0, 3], 0);
+        count = nancount([1, 0/0, 3]);
+        average = nanmean([1, 0/0, 3]);
+        total = nansum([1, 0/0, 3]);
+        lineSvg = plotLine([1, 2, 3], [4, 5, 6], "Trend");
+        barSvg = bar(["A", "B"], [2, 5], "Counts");
+      `,
+      env
+    );
+
+    expect(env.get("detected")).toEqual([false, true, false]);
+    expect(env.get("cleaned")).toEqual([1, 3]);
+    expect(env.get("filled")).toEqual([1, 0, 3]);
+    expect(env.get("count")).toBe(2);
+    expect(env.get("average")).toBe(2);
+    expect(env.get("total")).toBe(4);
+    expect(env.get("lineSvg")).toContain("<polyline");
+    expect(env.get("barSvg")).toContain("<rect");
+    expect(env.getCharts()).toHaveLength(2);
+  });
+
   it("executes descriptive statistics from src/istat", () => {
     const env = createEnvironment();
     const code = `

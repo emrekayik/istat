@@ -181,6 +181,32 @@ export async function startReplTui(env: Environment): Promise<void> {
   });
   chartPanel.add(chartText);
 
+  const fullChartPanel = new BoxRenderable(renderer, {
+    width: "100%",
+    height: "100%",
+    flexGrow: 1,
+    flexBasis: 0,
+    minWidth: 0,
+    minHeight: 0,
+    border: true,
+    borderStyle: "rounded",
+    borderColor: colors.borderActive,
+    title: " Chart ",
+    titleAlignment: "left",
+    paddingX: 1,
+    overflow: "hidden",
+    visible: false,
+  });
+  const fullChartText = new TextRenderable(renderer, {
+    width: "100%",
+    height: "100%",
+    content: "",
+    fg: colors.text,
+    wrapMode: "none",
+    overflow: "hidden",
+  });
+  fullChartPanel.add(fullChartText);
+
   sidebar.add(variablesPanel);
   sidebar.add(chartPanel);
 
@@ -233,6 +259,7 @@ export async function startReplTui(env: Environment): Promise<void> {
 
   body.add(transcript);
   body.add(sidebar);
+  body.add(fullChartPanel);
   screen.add(header);
   screen.add(body);
   screen.add(inputRow);
@@ -246,6 +273,8 @@ export async function startReplTui(env: Environment): Promise<void> {
   let commandCount = 0;
   let variableCount = 0;
   let chartCount = 0;
+  let chartIndex = -1;
+  let chartFullscreen = false;
   let activeChart: ChartInfo | undefined;
   let chartVisible = false;
   let sidebarVisible = true;
@@ -321,7 +350,7 @@ export async function startReplTui(env: Environment): Promise<void> {
   };
 
   const updateFooter = () => {
-    if (renderer.width < 80) {
+    if (renderer.width < 100) {
       footerText.content = styled(
         fg(colors.accent)("↑↓"),
         fg(colors.muted)(" history · "),
@@ -329,10 +358,10 @@ export async function startReplTui(env: Environment): Promise<void> {
         fg(colors.muted)(" scroll · "),
         fg(colors.accent)("F2"),
         fg(colors.muted)(" chart · "),
-        fg(colors.accent)("F3"),
-        fg(colors.muted)(" side · "),
-        fg(colors.accent)("^L"),
-        fg(colors.muted)(" clear · "),
+        fg(colors.accent)("F4"),
+        fg(colors.muted)(" full · "),
+        fg(colors.accent)("F5/F6"),
+        fg(colors.muted)(" cycle · "),
         fg(colors.accent)("^C"),
         fg(colors.muted)(" exit")
       );
@@ -345,6 +374,10 @@ export async function startReplTui(env: Environment): Promise<void> {
       fg(colors.muted)(" scroll  "),
       fg(colors.accent)("F2"),
       fg(colors.muted)(" chart  "),
+      fg(colors.accent)("F4"),
+      fg(colors.muted)(" fullscreen  "),
+      fg(colors.accent)("F5/F6"),
+      fg(colors.muted)(" prev/next  "),
       fg(colors.accent)("F3"),
       fg(colors.muted)(" sidebar  "),
       fg(colors.accent)("Ctrl+L"),
@@ -383,8 +416,26 @@ export async function startReplTui(env: Environment): Promise<void> {
   };
 
   const updateChart = () => {
-    chartPanel.visible = chartVisible;
+    chartPanel.visible = chartVisible && !chartFullscreen;
     chartPanel.borderColor = chartVisible ? colors.borderActive : colors.border;
+
+    if (chartFullscreen) {
+      if (!activeChart) return;
+      const width = Math.max(20, renderer.width - 6);
+      const height = Math.max(4, renderer.height - 9);
+      fullChartText.content = rowsToStyledText(
+        renderChartRows(activeChart, width, height)
+      );
+      const position =
+        chartCount > 0 && chartIndex >= 0
+          ? `${chartIndex + 1}/${chartCount} · `
+          : "";
+      fullChartPanel.title = ` ${fitText(
+        `${position}${chartTitle(activeChart)} · F4 close`,
+        Math.max(10, renderer.width - 6)
+      )} `;
+      return;
+    }
 
     if (!chartVisible) return;
 
@@ -393,7 +444,7 @@ export async function startReplTui(env: Environment): Promise<void> {
         fg(colors.muted)("No chart yet.\n\n"),
         fg(colors.accent)("plotHist([1, 2, 2, 3], 4)"),
         fg(colors.muted)("\nor\n"),
-        fg(colors.accent)("scatter(x, y)")
+        fg(colors.accent)("plotLine(y)  ·  bar(values)")
       );
       chartPanel.title = " Chart ";
       return;
@@ -404,7 +455,14 @@ export async function startReplTui(env: Environment): Promise<void> {
     chartText.content = rowsToStyledText(
       renderChartRows(activeChart, width, height)
     );
-    chartPanel.title = ` ${fitText(chartTitle(activeChart), Math.max(8, sidebarWidth - 12))} `;
+    const position =
+      chartCount > 0 && chartIndex >= 0
+        ? `${chartIndex + 1}/${chartCount} · `
+        : "";
+    chartPanel.title = ` ${fitText(
+      `${position}${chartTitle(activeChart)}`,
+      Math.max(8, sidebarWidth - 12)
+    )} `;
   };
 
   const applyLayout = () => {
@@ -413,7 +471,6 @@ export async function startReplTui(env: Environment): Promise<void> {
 
     sidebarWidth = Math.min(42, Math.max(26, Math.floor(width * 0.38)));
     sidebar.width = sidebarWidth;
-    sidebar.visible = sidebarVisible;
 
     bodyHeight = Math.max(6, height - 7);
     chartHeight = Math.max(
@@ -421,6 +478,19 @@ export async function startReplTui(env: Environment): Promise<void> {
       Math.min(12, Math.floor(bodyHeight * 0.5), bodyHeight - 5)
     );
     chartPanel.height = chartHeight;
+
+    const charts = env.getCharts();
+    chartCount = charts.length;
+    if (chartIndex >= charts.length) chartIndex = charts.length - 1;
+    if (chartIndex < 0 && charts.length > 0) chartIndex = charts.length - 1;
+    if (activeChart === undefined && chartIndex >= 0) {
+      activeChart = charts[chartIndex];
+    }
+
+    const fullscreen = chartFullscreen && activeChart !== undefined;
+    transcript.visible = !fullscreen;
+    sidebar.visible = !fullscreen && sidebarVisible;
+    fullChartPanel.visible = fullscreen;
 
     transcriptVisible = Math.max(1, bodyHeight - 2);
     const nextTranscriptWidth = Math.max(
@@ -441,7 +511,6 @@ export async function startReplTui(env: Environment): Promise<void> {
     }
     renderTranscript();
 
-    chartCount = env.getCharts().length;
     updateVariables();
     updateChart();
     updateHeader();
@@ -449,13 +518,60 @@ export async function startReplTui(env: Environment): Promise<void> {
   };
 
   const showChart = (chart: ChartInfo) => {
+    const charts = env.getCharts();
+    const index = charts.indexOf(chart);
+    chartIndex = index >= 0 ? index : charts.length - 1;
     activeChart = chart;
     chartVisible = true;
     sidebarVisible = true;
     applyLayout();
   };
 
+  const selectChart = (delta: number) => {
+    const charts = env.getCharts();
+    if (charts.length === 0) {
+      append(
+        "No charts yet. Try plotHist([1, 2, 2, 3], 4) or plotLine(y).",
+        colors.muted
+      );
+      return;
+    }
+    if (chartIndex < 0 || chartIndex >= charts.length) {
+      chartIndex = charts.length - 1;
+    }
+    chartIndex = (chartIndex + delta + charts.length) % charts.length;
+    activeChart = charts[chartIndex];
+    chartVisible = true;
+    if (!chartFullscreen) sidebarVisible = true;
+    applyLayout();
+  };
+
+  const toggleFullscreen = () => {
+    if (!chartFullscreen && !activeChart) {
+      const charts = env.getCharts();
+      if (charts.length === 0) {
+        append(
+          "No charts yet. Try plotHist([1, 2, 2, 3], 4) or plotLine(y).",
+          colors.muted
+        );
+        return;
+      }
+      chartIndex = charts.length - 1;
+      activeChart = charts[chartIndex];
+    }
+    chartFullscreen = !chartFullscreen;
+    chartVisible = true;
+    if (!chartFullscreen) sidebarVisible = true;
+    applyLayout();
+  };
+
   const toggleChart = () => {
+    if (chartFullscreen) {
+      chartFullscreen = false;
+      chartVisible = true;
+      applyLayout();
+      return;
+    }
     sidebarVisible = true;
     chartVisible = !chartVisible;
     applyLayout();
@@ -465,6 +581,12 @@ export async function startReplTui(env: Environment): Promise<void> {
   };
 
   const toggleSidebar = () => {
+    if (chartFullscreen) {
+      chartFullscreen = false;
+      sidebarVisible = true;
+      applyLayout();
+      return;
+    }
     sidebarVisible = !sidebarVisible;
     applyLayout();
   };
@@ -497,6 +619,21 @@ export async function startReplTui(env: Environment): Promise<void> {
     if (name === "f3") {
       key.preventDefault();
       toggleSidebar();
+      return;
+    }
+    if (name === "f4") {
+      key.preventDefault();
+      toggleFullscreen();
+      return;
+    }
+    if (name === "f5") {
+      key.preventDefault();
+      selectChart(1);
+      return;
+    }
+    if (name === "f6") {
+      key.preventDefault();
+      selectChart(-1);
       return;
     }
     if (key.ctrl && name === "l") {
@@ -858,12 +995,14 @@ function fitText(text: string, width: number): string {
 
 const helpLines = [
   "Session: who / whos / vars · clear · exit / quit",
-  "TUI: F2 chart · F3 sidebar · Ctrl+L clear transcript",
+  "TUI: F2 chart · F4 fullscreen · F5/F6 chart history · F3 sidebar · Ctrl+L clear",
   "Language: x = 1:2:9 · A = [1 2; 3 4] · A .* B · function y = f(x)",
   "Stats: mean, median, std, var, quantile, summary, mode, zscore",
+  "Missing: isnan, isna, dropna, fillna, nancount, nanmean, nanmedian, nansum",
   "Models: corr, spearman, linreg, polyfit",
   "Matrices: transpose, matmul, dot, det, inv, solve",
   "Chance: normalCdf, binomialPmf, poissonPmf, uniformCdf",
-  "Plots: plotHist, scatter, saveSvg",
+  "Plots: plotHist, plotLine, bar, scatter, saveSvg",
+  "Data: readData, readCsv, writeData, writeCsv, writeJson, writeXlsx",
   "Example: summary([2, 4, 4, 8])",
 ];

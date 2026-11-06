@@ -151,6 +151,21 @@ export class Environment {
       )
     );
     this.registerFunction("readJson", (path) => istat.readJson(String(path)));
+    this.registerFunction("writeData", (path, data, header = true) =>
+      istat.writeData(String(path), data, { header: Boolean(header) })
+    );
+    this.registerFunction("writeCsv", (path, data, header = true) =>
+      istat.writeCsv(String(path), data, Boolean(header))
+    );
+    this.registerFunction("writeJson", (path, data) =>
+      istat.writeJson(String(path), data)
+    );
+    this.registerFunction("writeXlsx", (path, data, sheet?, header = true) =>
+      istat.writeXlsx(String(path), data, {
+        sheet: sheet === undefined ? undefined : String(sheet),
+        header: Boolean(header),
+      })
+    );
     this.registerFunction("column", (rows, key) =>
       istat.column(rows, key as string | number)
     );
@@ -166,6 +181,49 @@ export class Environment {
     this.registerFunction("zscore", (data) => istat.zscore(toArray(data)));
     this.registerFunction("covarianceMatrix", (data, sample = true) =>
       istat.covarianceMatrix(data, Boolean(sample))
+    );
+    this.registerFunction("isnan", (data) => istat.isnan(data));
+    this.registerFunction("isna", (data) => istat.isna(data));
+    this.registerFunction("dropna", (data) =>
+      istat.dropna(toUnknownArray(data))
+    );
+    this.registerFunction("fillna", (data, value) =>
+      istat.fillna(toUnknownArray(data), Number(value))
+    );
+    this.registerFunction("nancount", (data) =>
+      istat.nancount(toUnknownArray(data))
+    );
+    this.registerFunction("nanmean", (data) =>
+      istat.nanmean(toUnknownArray(data))
+    );
+    this.registerFunction("nansum", (data) =>
+      istat.nansum(toUnknownArray(data))
+    );
+    this.registerFunction("nanmin", (data) =>
+      istat.nanmin(toUnknownArray(data))
+    );
+    this.registerFunction("nanmax", (data) =>
+      istat.nanmax(toUnknownArray(data))
+    );
+    this.registerFunction("nanmedian", (data) =>
+      istat.nanmedian(toUnknownArray(data))
+    );
+    this.registerFunction("nanvariance", (data, sample = true) =>
+      istat.nanvariance(toUnknownArray(data), Boolean(sample))
+    );
+    this.registerFunction("nanvar", (data, sample = true) =>
+      istat.nanvariance(toUnknownArray(data), Boolean(sample))
+    );
+    this.registerFunction("nanstdev", (data, sample = true) =>
+      istat.nanstdev(toUnknownArray(data), Boolean(sample))
+    );
+    this.registerFunction("nanstd", (data, sample = true) =>
+      istat.nanstdev(toUnknownArray(data), Boolean(sample))
+    );
+    this.registerFunction("nanquantile", (data, p, method = "linear") =>
+      istat.nanquantile(toUnknownArray(data), Number(p), {
+        method: method as any,
+      })
     );
     this.registerFunction("histogram", (data, bins = "sturges") =>
       istat.histogram(toArray(data), { bins: typeof bins === "number" ? bins : (bins as any) })
@@ -343,6 +401,68 @@ export class Environment {
       return svg;
     });
 
+    this.registerFunction("plotLine", (x, y, title?: string) => {
+      let xs: number[];
+      let ys: number[];
+      let chartTitle = title;
+
+      if (y === undefined || typeof y === "string") {
+        ys = toArray(x);
+        xs = ys.map((_, index) => index + 1);
+        chartTitle = title ?? (typeof y === "string" ? y : undefined);
+      } else {
+        xs = toArray(x);
+        ys = toArray(y);
+      }
+
+      if (xs.length !== ys.length) {
+        throw new RangeError(
+          `plotLine: x and y must have equal lengths (x: ${xs.length}, y: ${ys.length})`
+        );
+      }
+
+      const points: [number, number][] = xs.map((value, index) => [
+        value,
+        ys[index]!,
+      ]);
+      const svg = istat.lineToSvg(points, { title: chartTitle });
+      this.registerChart({ kind: "line", title: chartTitle, points, svg });
+      return svg;
+    });
+
+    const barChart = (
+      labelsOrValues: any,
+      valuesOrTitle?: any,
+      title?: string
+    ) => {
+      let labels: string[];
+      let values: number[];
+      let chartTitle = title;
+
+      if (Array.isArray(valuesOrTitle) || typeof valuesOrTitle === "number") {
+        labels = toLabelArray(labelsOrValues);
+        values = toArray(valuesOrTitle);
+      } else {
+        values = toArray(labelsOrValues);
+        labels = values.map((_, index) => String(index + 1));
+        chartTitle =
+          title ?? (typeof valuesOrTitle === "string" ? valuesOrTitle : undefined);
+      }
+
+      if (labels.length !== values.length) {
+        throw new RangeError(
+          `bar: labels and values must have equal lengths (labels: ${labels.length}, values: ${values.length})`
+        );
+      }
+
+      const svg = istat.barToSvg(labels, values, { title: chartTitle });
+      this.registerChart({ kind: "bar", title: chartTitle, labels, values, svg });
+      return svg;
+    };
+
+    this.registerFunction("bar", barChart);
+    this.registerFunction("plotBar", barChart);
+
     this.registerFunction("saveSvg", (filepath: string, svgContent: string) => {
       fs.writeFileSync(String(filepath), String(svgContent), "utf-8");
       return `Saved SVG to ${filepath}`;
@@ -402,6 +522,20 @@ function toArray(data: any): number[] {
     return [data];
   }
   throw new TypeError(`Expected an array of numbers, got ${typeof data}`);
+}
+
+function toUnknownArray(data: any): any[] {
+  return Array.isArray(data) ? data : [data];
+}
+
+function toLabelArray(data: any): string[] {
+  if (Array.isArray(data)) {
+    return data.map((value) => String(value));
+  }
+  if (typeof data === "string" || typeof data === "number") {
+    return [String(data)];
+  }
+  throw new TypeError(`Expected an array of labels, got ${typeof data}`);
 }
 
 export function evaluate(program: Program, env = new Environment()): ExecutionResult {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import * as XLSX from "xlsx";
@@ -22,6 +22,8 @@ import {
   quickselect,
   histogramToSvg,
   scatterToSvg,
+  lineToSvg,
+  barToSvg,
   mode,
   skewness,
   kurtosis,
@@ -48,7 +50,24 @@ import {
   readCsv,
   readXlsx,
   readJson,
+  writeData,
+  writeCsv,
+  writeXlsx,
+  writeJson,
   column,
+  isnan,
+  isna,
+  dropna,
+  fillna,
+  nancount,
+  nanmean,
+  nansum,
+  nanmin,
+  nanmax,
+  nanmedian,
+  nanvariance,
+  nanstdev,
+  nanquantile,
   benchmark,
   now,
   tic,
@@ -224,6 +243,141 @@ describe("istat - Data Import", () => {
   it("rejects unsupported extensions and missing columns", () => {
     expect(() => readData("unknown.parquet")).toThrow("unsupported file type");
     expect(() => column([{ value: 1 }], "missing")).toThrow("column 'missing' not found");
+  });
+});
+
+describe("istat - Data Export", () => {
+  it("writes CSV, JSON, and XLSX files chosen by extension", () => {
+    const dir = mkdtempSync(join(tmpdir(), "istat-export-"));
+    try {
+      const rows = [
+        { name: "Ada", score: 9 },
+        { name: "Lin", score: 10 },
+      ];
+      const csvPath = join(dir, "scores.csv");
+      const jsonPath = join(dir, "scores.json");
+      const xlsxPath = join(dir, "scores.xlsx");
+
+      expect(writeData(csvPath, rows)).toBe(`Saved CSV to ${csvPath}`);
+      expect(readFileSync(csvPath, "utf8")).toBe("name,score\nAda,9\nLin,10\n");
+      expect(readCsv(csvPath)).toEqual(rows);
+
+      expect(writeData(jsonPath, rows)).toBe(`Saved JSON to ${jsonPath}`);
+      expect(readJson(jsonPath)).toEqual(rows);
+
+      expect(writeData(xlsxPath, rows)).toBe(`Saved XLSX to ${xlsxPath}`);
+      expect(readXlsx(xlsxPath)).toEqual(rows);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("writes rows, records, single records, and quoted CSV cells", () => {
+    const dir = mkdtempSync(join(tmpdir(), "istat-export-"));
+    try {
+      const matrixPath = join(dir, "matrix.csv");
+      expect(writeCsv(matrixPath, [[1, 2], [3, 4]], false)).toContain("Saved CSV");
+      expect(readFileSync(matrixPath, "utf8")).toBe("1,2\n3,4\n");
+
+      const recordPath = join(dir, "record.csv");
+      writeCsv(recordPath, { name: "Ada", note: 'say "hi"', score: null });
+      expect(readFileSync(recordPath, "utf8")).toBe(
+        'name,note,score\nAda,"say ""hi""",\n'
+      );
+
+      const valuePath = join(dir, "values.csv");
+      writeCsv(valuePath, [1, 2, 3]);
+      expect(readFileSync(valuePath, "utf8")).toBe("value\n1\n2\n3\n");
+
+      const jsonPath = join(dir, "record.json");
+      writeJson(jsonPath, { name: "Ada" });
+      expect(readFileSync(jsonPath, "utf8")).toBe(
+        '{\n  "name": "Ada"\n}\n'
+      );
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects unsupported write extensions and invalid data", () => {
+    expect(() => writeData("unknown.parquet", [1, 2])).toThrow(
+      "unsupported file type"
+    );
+    expect(() => writeJson("record.json", undefined)).toThrow(
+      "data cannot be undefined"
+    );
+    expect(() => writeCsv("mixed.csv", [[1, 2], { value: 3 }])).toThrow(
+      "rows of the same shape"
+    );
+    expect(() => writeXlsx("record.xlsx", "not tabular")).toThrow(
+      "data must be an array or record"
+    );
+  });
+});
+
+describe("istat - Missing Data", () => {
+  it("detects NaN and missing values element-wise", () => {
+    expect(isnan(Number.NaN)).toBe(true);
+    expect(isnan(null)).toBe(false);
+    expect(isnan([1, Number.NaN, null, undefined])).toEqual([
+      false,
+      true,
+      false,
+      false,
+    ]);
+    expect(isnan([[1, Number.NaN], [null, 2]])).toEqual([
+      [false, true],
+      [false, false],
+    ]);
+
+    expect(isna(null)).toBe(true);
+    expect(isna(undefined)).toBe(true);
+    expect(isna(Number.NaN)).toBe(true);
+    expect(isna("text")).toBe(false);
+    expect(isna([1, Number.NaN, null, undefined])).toEqual([
+      false,
+      true,
+      true,
+      true,
+    ]);
+    expect(isna([[1, Number.NaN], [null, 2]])).toEqual([
+      [false, true],
+      [true, false],
+    ]);
+  });
+
+  it("drops and fills missing values in vectors and matrices", () => {
+    expect(dropna([1, null, 3, Number.NaN, undefined])).toEqual([1, 3]);
+    expect(dropna([[1, 2], [null, 3], [4, Number.NaN]])).toEqual([[1, 2]]);
+    expect(fillna([1, null, Number.NaN, 4], 0)).toEqual([1, 0, 0, 4]);
+    expect(fillna([[1, null], [Number.NaN, 3]], -1)).toEqual([
+      [1, -1],
+      [-1, 3],
+    ]);
+  });
+
+  it("computes statistics that ignore missing values", () => {
+    const data = [1, Number.NaN, 3, null, 5];
+    expect(nancount(data)).toBe(3);
+    expect(nanmean(data)).toBe(3);
+    expect(nansum(data)).toBe(9);
+    expect(nanmin(data)).toBe(1);
+    expect(nanmax(data)).toBe(5);
+    expect(nanmedian(data)).toBe(3);
+    expect(nanvariance(data)).toBe(4);
+    expect(nanstdev(data)).toBe(2);
+    expect(nanquantile(data, 0.5)).toBe(3);
+  });
+
+  it("returns documented sentinels when no valid values remain", () => {
+    expect(nanmean([null, Number.NaN])).toBeNaN();
+    expect(nanmedian([null, Number.NaN])).toBeNaN();
+    expect(nanvariance([null, Number.NaN])).toBeNaN();
+    expect(nanstdev([null, Number.NaN])).toBeNaN();
+    expect(nanquantile([null, Number.NaN], 0.5)).toBeNaN();
+    expect(nansum([null, Number.NaN])).toBe(0);
+    expect(() => nanmin([null, Number.NaN])).toThrow("no valid values");
+    expect(() => nanmax([null, Number.NaN])).toThrow("no valid values");
   });
 });
 

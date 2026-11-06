@@ -26,6 +26,8 @@ Start an interactive session:
 bun run istat repl
 ```
 
+In a terminal, the REPL opens a TUI with a session transcript, variables sidebar, and Unicode chart panel. Charts are kept in session history: press `F4` for fullscreen, `F5`/`F6` for next/previous, and `F2`/`F3` to toggle the chart panel and sidebar.
+
 Open the browser-based iStat Studio with the language/library docs, Ace editor, and runnable examples:
 
 ```sh
@@ -51,7 +53,9 @@ bun run istat examples/analysis.istat
 > package script and exits with `Invalid Argument '-f'`. Use one of the commands above
 > (or `bun --silent istat run ...` to hide Bun's script echo).
 
-Import a CSV, XLSX, or JSON file in a script with `readData(path)`. For example, `rows = readData("examples/measurements.csv"); scores = column(rows, "score"); mean(scores)` reads a CSV using its first row as headers.
+Import a CSV, XLSX, or JSON file in a script with `readData(path)`. For example, `rows = readData("examples/measurements.csv"); scores = column(rows, "score"); mean(scores)` reads a CSV using its first row as headers. Export with `writeData(path, data)`, which chooses CSV, XLSX/XLS, or JSON from the extension. Missing values can be detected with `isnan`/`isna`, removed with `dropna`, replaced with `fillna`, and ignored by the `nanmean`, `nanmedian`, `nansum`, `nanvariance`, and `nanstdev` family.
+
+Plot histograms, line charts, bar charts, and scatter plots with `plotHist`, `plotLine`, `bar`, and `scatter`. Each returns SVG markup for export.
 
 The `eval` command also supports `--json` for machine-readable output. `eval` and `run` support `--svg <path>` to save an SVG chart returned by the last statement. See the [CLI guide](docs/cli.md) and [language reference](docs/language.md) for command options and syntax.
 

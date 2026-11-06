@@ -40,7 +40,7 @@ Options:
 | `-j, --json` | Print the input, last result, and variables as JSON |
 | `-s, --svg <path>` | Save the last result as an SVG when it is SVG markup |
 
-For example, `bun run istat eval -i 'x = [1, 2, 2, 3]; plotHist(x, 4, "Counts")' --svg histogram.svg` evaluates the chart expression and writes its SVG to `histogram.svg`. The saved markup is not echoed to the terminal. If the last result is not SVG markup, iStat prints a warning and writes no file.
+For example, `bun run istat eval -i 'x = [1, 2, 2, 3]; plotHist(x, 4, "Counts")' --svg histogram.svg` evaluates the chart expression and writes its SVG to `histogram.svg`. `plotLine`, `bar`, and `scatter` return SVG markup as well, so the same flag works for every chart type. The saved markup is not echoed to the terminal. If the last result is not SVG markup, iStat prints a warning and writes no file.
 
 With `--json`, the saved path is included as an `svg` field and the save confirmation is written to stderr, so stdout remains valid JSON.
 
@@ -89,8 +89,9 @@ sidebar summarizes current variables and updates after each command.
 
 Plot functions render directly in the chart panel as Unicode charts while still
 returning SVG markup for `saveSvg` and `--svg`. A new chart opens the panel
-automatically. The panel can show a histogram or scatter plot, and the transcript
-keeps the textual result.
+automatically. The panel can show a histogram, line chart, bar chart, or scatter
+plot, and the transcript keeps the textual result. iStat keeps the charts
+created during the session so you can revisit them with the chart history keys.
 
 | Key | Action |
 | --- | --- |
@@ -98,6 +99,9 @@ keeps the textual result.
 | Page Up / Page Down | Scroll the session transcript |
 | F2 | Show or hide the chart panel |
 | F3 | Show or hide the variables sidebar |
+| F4 | Toggle fullscreen chart view |
+| F5 | Show the next chart in history |
+| F6 | Show the previous chart in history |
 | Ctrl+L | Clear the transcript |
 | Ctrl+C | Exit the REPL |
 

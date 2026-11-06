@@ -1,5 +1,5 @@
 import * as XLSX from "xlsx";
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 export interface ReadDataOptions {
@@ -7,6 +7,13 @@ export interface ReadDataOptions {
   readonly sheet?: string | number;
   /** Interpret the first row as object keys. Defaults to `true`. */
   readonly header?: boolean;
+}
+
+export interface WriteDataOptions {
+  /** Include a header row for record data. Defaults to `true`. */
+  readonly header?: boolean;
+  /** Worksheet name used when writing an XLSX file. Defaults to `Sheet1`. */
+  readonly sheet?: string;
 }
 
 /**
@@ -89,6 +96,140 @@ export function column(
     }
     throw new TypeError(`column: row ${index + 1} is not a record or array`);
   });
+}
+
+/**
+ * Writes a CSV, XLSX, or JSON file, choosing the format from the extension.
+ * CSV and spreadsheet writers accept arrays of records, arrays of rows, or a
+ * single record.
+ */
+export function writeData(
+  filePath: string,
+  data: unknown,
+  options: WriteDataOptions = {}
+): string {
+  const path = resolve(filePath);
+  const extension = path.split(".").pop()?.toLowerCase();
+
+  if (extension === "json") {
+    return writeJson(path, data);
+  }
+  if (extension === "csv") {
+    return writeCsv(path, data, options.header ?? true);
+  }
+  if (extension === "xlsx" || extension === "xls") {
+    return writeXlsx(path, data, options);
+  }
+  throw new TypeError(
+    `writeData: unsupported file type '.${extension ?? ""}'. Supported types are .csv, .xlsx, .xls, and .json`
+  );
+}
+
+export function writeJson(filePath: string, data: unknown): string {
+  const path = resolve(filePath);
+  if (data === undefined) {
+    throw new TypeError("writeJson: data cannot be undefined");
+  }
+  writeFileSync(path, JSON.stringify(data, null, 2) + "\n", "utf8");
+  return `Saved JSON to ${path}`;
+}
+
+export function writeCsv(
+  filePath: string,
+  data: unknown,
+  header = true
+): string {
+  const path = resolve(filePath);
+  const rows = tabularRows(data, "writeCsv", header);
+  const content = rows.map((row) => row.map(csvCell).join(",")).join("\n");
+  writeFileSync(path, content.length > 0 ? content + "\n" : "", "utf8");
+  return `Saved CSV to ${path}`;
+}
+
+export function writeXlsx(
+  filePath: string,
+  data: unknown,
+  options: WriteDataOptions = {}
+): string {
+  const path = resolve(filePath);
+  const rows = tabularRows(data, "writeXlsx", options.header ?? true);
+  const worksheet = XLSX.utils.aoa_to_sheet(rows);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, options.sheet ?? "Sheet1");
+  const extension = path.split(".").pop()?.toLowerCase();
+  XLSX.writeFile(
+    workbook,
+    path,
+    extension === "xls" ? { bookType: "biff8" } : undefined
+  );
+  return `Saved ${extension === "xls" ? "XLS" : "XLSX"} to ${path}`;
+}
+
+function tabularRows(
+  data: unknown,
+  fn: string,
+  header: boolean
+): unknown[][] {
+  if (Array.isArray(data)) {
+    if (data.length === 0) return [];
+    if (data.every((row) => Array.isArray(row))) {
+      return data.map((row) => [...(row as unknown[])]);
+    }
+    if (
+      data.every(
+        (row) =>
+          !Array.isArray(row) && typeof row === "object" && row !== null
+      )
+    ) {
+      const headers: string[] = [];
+      for (const row of data) {
+        for (const key of Object.keys(row as Record<string, unknown>)) {
+          if (!headers.includes(key)) headers.push(key);
+        }
+      }
+      const rows = data.map((row) =>
+        headers.map((key) => (row as Record<string, unknown>)[key])
+      );
+      return header ? [headers, ...rows] : rows;
+    }
+    if (data.every((value) => typeof value !== "object" || value === null)) {
+      const rows = data.map((value) => [value]);
+      return header ? [["value"], ...rows] : rows;
+    }
+    throw new TypeError(
+      `${fn}: data must contain rows of the same shape (all arrays or all records)`
+    );
+  }
+
+  if (typeof data === "object" && data !== null) {
+    const record = data as Record<string, unknown>;
+    const headers = Object.keys(record);
+    const values = headers.map((key) => record[key]);
+    return header ? [headers, values] : [values];
+  }
+
+  throw new TypeError(`${fn}: data must be an array or record`);
+}
+
+function csvCell(value: unknown): string {
+  if (
+    value === null ||
+    value === undefined ||
+    (typeof value === "number" && Number.isNaN(value))
+  ) {
+    return "";
+  }
+
+  let text =
+    value instanceof Date
+      ? value.toISOString()
+      : typeof value === "object"
+        ? (JSON.stringify(value) ?? String(value))
+        : String(value);
+  if (/[",\n\r]/.test(text) || /^\s|\s$/.test(text)) {
+    text = `"${text.replace(/"/g, '""')}"`;
+  }
+  return text;
 }
 
 function readTabularFile(

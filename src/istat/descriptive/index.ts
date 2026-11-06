@@ -6,3 +6,4 @@ export * from "./quantile";
 export * from "./summary";
 export * from "./histogram";
 export * from "./additional";
+export * from "./missing";

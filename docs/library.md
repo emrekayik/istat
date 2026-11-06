@@ -89,18 +89,42 @@ linearRegression(x, y).predict(5);   // 11
 polynomialRegression(x, y, 1).r2;   // 1
 ```
 
-## Data import
+## Data import and export
 
-The `io` namespace and flat exports provide `readData`, `readCsv`, `readXlsx`, `readJson`, and `column`. Relative paths are resolved from `process.cwd()`. `readData` infers CSV, XLSX/XLS, or JSON from the file extension. CSV and spreadsheet readers return row records by default, using the first row as headers; pass `false` for the `header` argument to get arrays instead. `readXlsx` accepts an optional worksheet name or zero-based index (default: first sheet). `column(rows, key)` extracts a record field by name or an array-row column by 1-based numeric index.
+The `io` namespace and flat exports provide `readData`, `readCsv`, `readXlsx`, `readJson`, `writeData`, `writeCsv`, `writeXlsx`, `writeJson`, and `column`. Relative paths are resolved from `process.cwd()`. `readData` and `writeData` infer CSV, XLSX/XLS, or JSON from the file extension. CSV and spreadsheet readers return row records by default, using the first row as headers; pass `false` for the `header` argument to get arrays instead. `readXlsx` accepts an optional worksheet name or zero-based index (default: first sheet). `column(rows, key)` extracts a record field by name or an array-row column by 1-based numeric index.
 
 ```ts
-import { column, mean, readData } from "./src/istat";
+import { column, mean, readData, writeData } from "./src/istat";
 
 const rows = readData("examples/measurements.csv");
 mean(column(rows, "score") as number[]); // 15.65
+writeData("clean.csv", rows);
 ```
 
+The writers accept an array of records, an array of rows, or a single record. Record keys form the header row unless `header` is `false`. `writeXlsx(path, data, { sheet: "Scores" })` selects the worksheet name. Each writer returns a `Saved <FORMAT> to <path>` confirmation string.
+
 `readJson(path)` returns the parsed JSON value. File access, unsupported extensions, invalid JSON, and missing columns throw errors.
+
+## Missing data
+
+The missing-data helpers accept vectors containing `number`, `null`, or `undefined` values; non-numeric cells are treated as missing.
+
+- `isnan(value)` returns `true` only for `NaN`; `isna(value)` also treats `null` and `undefined` as missing. Both work element-wise on vectors and matrices.
+- `dropna(data)` removes missing entries, or matrix rows containing a missing entry.
+- `fillna(data, value)` replaces missing entries with `value`.
+- `nancount`, `nanmean`, `nanmedian`, `nansum`, `nanmin`, `nanmax`, `nanvariance` / `nanvar`, `nanstdev` / `nanstd`, and `nanquantile` ignore missing entries.
+
+```ts
+import { dropna, fillna, nanmean, isna } from "./src/istat";
+
+const values = [2, Number.NaN, 4, 6];
+isna(values);        // [false, true, false, false]
+dropna(values);      // [2, 4, 6]
+fillna(values, 0);   // [2, 0, 4, 6]
+nanmean(values);     // 4
+```
+
+`nanmean`, `nanmedian`, `nanvariance`, `nanstdev`, and `nanquantile` return `NaN` when no valid values remain; `nansum` returns `0`; `nanmin` and `nanmax` throw a `RangeError`.
 
 ## Timing and benchmarking
 
@@ -135,10 +159,10 @@ variance.variance; // 4 (population variance)
 
 ## SVG charts
 
-`histogramToSvg(bins, options?)` and `scatterToSvg(points, options?)` return standalone SVG strings. `SvgChartOptions` supports `width`, `height`, `padding`, `title`, `xLabel`, `yLabel`, `fill`, and `fontSize`.
+`histogramToSvg(bins, options?)`, `lineToSvg(points, options?)`, `barToSvg(labels, values, options?)`, and `scatterToSvg(points, options?)` return standalone SVG strings. Line and scatter points are `[x, y]` tuples. Bar values may be negative and are drawn relative to zero. `SvgChartOptions` supports `width`, `height`, `padding`, `title`, `xLabel`, `yLabel`, `fill`, `stroke`, and `fontSize`.
 
 ```ts
-import { histogram, histogramToSvg } from "./src/istat";
+import { barToSvg, histogram, histogramToSvg, lineToSvg } from "./src/istat";
 
 const bins = histogram([1, 2, 2, 3, 4], { bins: 4 });
 const svg = histogramToSvg(bins, {
@@ -146,6 +170,9 @@ const svg = histogramToSvg(bins, {
   xLabel: "Value",
   yLabel: "Count",
 });
+
+lineToSvg([[1, 3], [2, 5], [3, 4]], { title: "Trend" });
+barToSvg(["A", "B", "C"], [4, 7, 2], { title: "Counts" });
 ```
 
 ## Namespaces and types

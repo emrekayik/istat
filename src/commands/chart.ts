@@ -1,4 +1,10 @@
-import type { ChartInfo, HistogramChartInfo, ScatterChartInfo } from "../core/charts";
+import type {
+  BarChartInfo,
+  ChartInfo,
+  HistogramChartInfo,
+  LineChartInfo,
+  ScatterChartInfo,
+} from "../core/charts";
 
 export type ChartTone = "title" | "axis" | "bar" | "point" | "label" | "muted";
 
@@ -20,10 +26,17 @@ export function renderChartRows(
   width: number,
   height: number
 ): ChartRow[] {
-  if (chart.kind === "histogram") {
-    return renderHistogramRows(chart, width, height);
+  switch (chart.kind) {
+    case "histogram":
+      return renderHistogramRows(chart, width, height);
+    case "line":
+      return renderLineRows(chart, width, height);
+    case "bar":
+      return renderBarRows(chart, width, height);
+    case "scatter":
+    default:
+      return renderScatterRows(chart, width, height);
   }
-  return renderScatterRows(chart, width, height);
 }
 
 export function renderHistogramRows(
@@ -206,9 +219,181 @@ export function renderScatterRows(
   return rows;
 }
 
+export function renderLineRows(
+  chart: LineChartInfo,
+  width: number,
+  height: number
+): ChartRow[] {
+  if (chart.points.length === 0) {
+    return [[{ text: "No line data.", tone: "muted" }]];
+  }
+
+  const canvasWidth = Math.max(16, Math.floor(width));
+  const canvasHeight = Math.max(4, Math.floor(height));
+  const rows: ChartRow[] = [];
+  const title = chart.title?.trim();
+
+  if (title) {
+    rows.push([{ text: centerText(title, canvasWidth), tone: "title" }]);
+  }
+
+  const xs = chart.points.map((point) => point[0]);
+  const ys = chart.points.map((point) => point[1]);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+  const labelWidth = Math.min(
+    7,
+    Math.max(
+      4,
+      Math.max(formatNumber(minY).length, formatNumber(maxY).length) + 1
+    )
+  );
+  const plotWidth = Math.max(8, canvasWidth - labelWidth);
+  const plotHeight = Math.max(1, canvasHeight - rows.length - 2);
+  const grid = Array.from({ length: plotHeight }, () =>
+    new Array<string>(plotWidth).fill(" ")
+  );
+
+  const columnFor = (x: number) =>
+    maxX === minX
+      ? Math.floor((plotWidth - 1) / 2)
+      : clamp(Math.round(((x - minX) / (maxX - minX)) * (plotWidth - 1)), 0, plotWidth - 1);
+  const rowFor = (y: number) =>
+    maxY === minY
+      ? Math.floor((plotHeight - 1) / 2)
+      : clamp(
+          plotHeight - 1 - Math.round(((y - minY) / (maxY - minY)) * (plotHeight - 1)),
+          0,
+          plotHeight - 1
+        );
+
+  for (let index = 1; index < chart.points.length; index += 1) {
+    const [x0, y0] = chart.points[index - 1]!;
+    const [x1, y1] = chart.points[index]!;
+    drawLine(grid, columnFor(x0), rowFor(y0), columnFor(x1), rowFor(y1));
+  }
+
+  for (const [x, y] of chart.points) {
+    const column = columnFor(x);
+    const row = rowFor(y);
+    grid[row]![column] = "●";
+  }
+
+  for (let row = 0; row < plotHeight; row += 1) {
+    const segments: ChartSegment[] = [
+      {
+        text: padStart(
+          scatterYLabelForRow(row, plotHeight, minY, maxY),
+          labelWidth
+        ),
+        tone: "label",
+      },
+    ];
+
+    for (let column = 0; column < plotWidth; column += 1) {
+      const cell = grid[row]![column]!;
+      segments.push({
+        text: cell,
+        tone: cell === " " ? "muted" : cell === "●" ? "point" : "bar",
+      });
+    }
+
+    rows.push(segments);
+  }
+
+  rows.push([
+    { text: " ".repeat(labelWidth), tone: "axis" },
+    { text: "└" + "─".repeat(plotWidth - 1), tone: "axis" },
+  ]);
+  rows.push([
+    { text: " ".repeat(labelWidth), tone: "label" },
+    {
+      text: xLabels(formatNumber(minX), formatNumber(maxX), plotWidth),
+      tone: "label",
+    },
+  ]);
+
+  return rows;
+}
+
+export function renderBarRows(
+  chart: BarChartInfo,
+  width: number,
+  height: number
+): ChartRow[] {
+  if (chart.values.length === 0) {
+    return [[{ text: "No bar data.", tone: "muted" }]];
+  }
+  if (chart.labels.length !== chart.values.length) {
+    return [[{ text: "Bar labels and values do not match.", tone: "muted" }]];
+  }
+
+  const canvasWidth = Math.max(16, Math.floor(width));
+  const canvasHeight = Math.max(4, Math.floor(height));
+  const rows: ChartRow[] = [];
+  const title = chart.title?.trim();
+
+  if (title) {
+    rows.push([{ text: centerText(title, canvasWidth), tone: "title" }]);
+  }
+
+  const maxLabelLength = Math.max(...chart.labels.map((label) => label.length));
+  const labelWidth = Math.min(
+    Math.max(3, maxLabelLength),
+    Math.max(4, Math.floor(canvasWidth * 0.35))
+  );
+  const valueWidth = Math.max(
+    ...chart.values.map((value) => formatNumber(value).length)
+  );
+  const barWidth = Math.max(1, canvasWidth - labelWidth - valueWidth - 3);
+  const maxAbs = Math.max(1, ...chart.values.map((value) => Math.abs(value)));
+  const available = Math.max(1, canvasHeight - rows.length);
+  const showEllipsis = chart.values.length > available;
+  const visibleCount = showEllipsis ? Math.max(1, available - 1) : chart.values.length;
+
+  for (let index = 0; index < visibleCount; index += 1) {
+    const value = chart.values[index]!;
+    const label = fitText(chart.labels[index]!, labelWidth).padEnd(labelWidth);
+    const length = Math.max(
+      0,
+      Math.round((Math.abs(value) / maxAbs) * barWidth)
+    );
+    const bar = (value < 0 ? "░" : "█").repeat(length);
+    const valueText = formatNumber(value).padStart(valueWidth);
+
+    rows.push([
+      { text: label, tone: "label" },
+      { text: " ", tone: "muted" },
+      { text: bar, tone: value < 0 ? "muted" : "bar" },
+      { text: " ".repeat(Math.max(0, barWidth - length)), tone: "muted" },
+      { text: ` ${valueText}`, tone: "label" },
+    ]);
+  }
+
+  if (showEllipsis) {
+    rows.push([
+      {
+        text: `… ${chart.values.length - visibleCount} more`,
+        tone: "muted",
+      },
+    ]);
+  }
+
+  return rows;
+}
+
 export function chartTitle(chart: ChartInfo | undefined): string {
   if (!chart) return "Chart";
-  const label = chart.kind === "histogram" ? "Histogram" : "Scatter";
+  const label =
+    chart.kind === "histogram"
+      ? "Histogram"
+      : chart.kind === "scatter"
+        ? "Scatter"
+        : chart.kind === "line"
+          ? "Line"
+          : "Bar";
   return chart.title?.trim() ? `${chart.title.trim()} · ${label}` : label;
 }
 
@@ -216,6 +401,51 @@ export function chartToText(rows: readonly ChartRow[]): string {
   return rows
     .map((row) => row.map((segment) => segment.text).join(""))
     .join("\n");
+}
+
+function drawLine(
+  grid: string[][],
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number
+): void {
+  let x = x0;
+  let y = y0;
+  const dx = Math.abs(x1 - x0);
+  const sx = x0 < x1 ? 1 : -1;
+  const dy = -Math.abs(y1 - y0);
+  const sy = y0 < y1 ? 1 : -1;
+  let error = dx + dy;
+
+  while (true) {
+    if (grid[y]?.[x] === undefined) return;
+    if (grid[y]![x] === " ") {
+      grid[y]![x] = "·";
+    }
+    if (x === x1 && y === y1) return;
+
+    const doubled = 2 * error;
+    let stepX = false;
+    let stepY = false;
+    if (doubled >= dy) {
+      error += dy;
+      x += sx;
+      stepX = true;
+    }
+    if (doubled <= dx) {
+      error += dx;
+      y += sy;
+      stepY = true;
+    }
+
+    const previousX = x - (stepX ? sx : 0);
+    const previousY = y - (stepY ? sy : 0);
+    if (grid[previousY]?.[previousX] !== undefined) {
+      grid[previousY]![previousX] =
+        stepX && stepY ? (sy < 0 ? "╱" : "╲") : stepX ? "─" : "│";
+    }
+  }
 }
 
 function yLabelForRow(row: number, height: number, max: number): string {
