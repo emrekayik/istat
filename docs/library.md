@@ -61,6 +61,8 @@ The `probability` namespace and flat exports provide probability density (`Pdf`)
 
 Discrete distribution counts must be integers, probabilities are in `[0, 1]`, and distribution parameters are validated. `normalCdf` uses a numerical approximation to the error function.
 
+The implementation is split by distribution under `src/istat/probability/`: `normal.ts`, `binomial.ts`, `poisson.ts`, `uniform.ts`, and shared numerical helpers in `special.ts`. The folder's `index.ts` preserves the existing flat and namespace exports.
+
 ```ts
 import { binomialPmf, normalCdf, poissonPmf, uniformCdf } from "./src/istat";
 

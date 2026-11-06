@@ -71,10 +71,27 @@ Start a persistent interactive session:
 bun run istat repl
 ```
 
-When launched in a terminal, the REPL opens an OpenTUI screen with a scrollable
-session transcript and an editable input. Up/down recalls commands, Page Up/Down
-scrolls the transcript, and Ctrl+C exits. When input is piped or the terminal
-interface is unavailable, the REPL uses the line-oriented prompt.
+When launched in a terminal, the REPL opens an OpenTUI screen with a session
+header, a session transcript, a variables sidebar, a chart panel, and an
+editable input. The header tracks variable, chart, and command counts; the
+sidebar summarizes current variables and updates after each command.
+
+Plot functions render directly in the chart panel as Unicode charts while still
+returning SVG markup for `saveSvg` and `--svg`. A new chart opens the panel
+automatically. The panel can show a histogram or scatter plot, and the transcript
+keeps the textual result.
+
+| Key | Action |
+| --- | --- |
+| Up / Down | Recall previous commands |
+| Page Up / Page Down | Scroll the session transcript |
+| F2 | Show or hide the chart panel |
+| F3 | Show or hide the variables sidebar |
+| Ctrl+L | Clear the transcript |
+| Ctrl+C | Exit the REPL |
+
+When input is piped or the terminal interface is unavailable, the REPL uses the
+line-oriented prompt.
 
 Built-in REPL commands:
 

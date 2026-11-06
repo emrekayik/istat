@@ -2,7 +2,6 @@ import {
   BoxRenderable,
   InputRenderable,
   InputRenderableEvents,
-  ScrollBoxRenderable,
   StyledText,
   TextRenderable,
   bold,
@@ -47,7 +46,7 @@ const chartToneColors: Record<ChartTone, string> = {
   muted: colors.border,
 };
 
-const MAX_TRANSCRIPT_LINES = 400;
+const MAX_TRANSCRIPT_LINES = 800;
 
 export async function startReplTui(env: Environment): Promise<void> {
   const renderer = await createCliRenderer({
@@ -103,7 +102,7 @@ export async function startReplTui(env: Environment): Promise<void> {
     backgroundColor: colors.background,
   });
 
-  const transcript = new ScrollBoxRenderable(renderer, {
+  const transcript = new BoxRenderable(renderer, {
     flexGrow: 1,
     flexBasis: 0,
     minWidth: 0,
@@ -113,14 +112,19 @@ export async function startReplTui(env: Environment): Promise<void> {
     borderColor: colors.border,
     title: " Session ",
     titleAlignment: "left",
-    stickyScroll: true,
-    stickyStart: "bottom",
-    contentOptions: {
-      flexDirection: "column",
-      padding: 1,
-      gap: 0,
-    },
+    paddingX: 1,
+    paddingY: 0,
+    overflow: "hidden",
   });
+  const transcriptText = new TextRenderable(renderer, {
+    width: "100%",
+    height: "100%",
+    content: "",
+    fg: colors.text,
+    wrapMode: "none",
+    overflow: "hidden",
+  });
+  transcript.add(transcriptText);
 
   const sidebar = new BoxRenderable(renderer, {
     width: 32,
@@ -131,7 +135,7 @@ export async function startReplTui(env: Environment): Promise<void> {
     backgroundColor: colors.background,
   });
 
-  const variablesPanel = new ScrollBoxRenderable(renderer, {
+  const variablesPanel = new BoxRenderable(renderer, {
     flexGrow: 1,
     flexBasis: 0,
     minHeight: 4,
@@ -140,19 +144,17 @@ export async function startReplTui(env: Environment): Promise<void> {
     borderColor: colors.border,
     title: " Variables ",
     titleAlignment: "left",
-    stickyScroll: true,
-    stickyStart: "top",
-    contentOptions: {
-      flexDirection: "column",
-      paddingX: 1,
-      paddingY: 0,
-    },
+    paddingX: 1,
+    paddingY: 0,
+    overflow: "hidden",
   });
   const variablesText = new TextRenderable(renderer, {
     width: "100%",
+    height: "100%",
     content: "",
     fg: colors.text,
-    wrapMode: "word",
+    wrapMode: "none",
+    overflow: "hidden",
   });
   variablesPanel.add(variablesText);
 
@@ -239,8 +241,6 @@ export async function startReplTui(env: Environment): Promise<void> {
   input.focus();
 
   const history: string[] = [];
-  const lineIds: string[] = [];
-  let lineCounter = 0;
   let historyIndex = 0;
   let draft = "";
   let commandCount = 0;
@@ -251,32 +251,54 @@ export async function startReplTui(env: Environment): Promise<void> {
   let sidebarVisible = true;
   let sidebarWidth = 32;
   let chartHeight = 8;
+  let bodyHeight = 10;
+  let transcriptWidth = 40;
+  let transcriptVisible = 1;
+  let transcriptScroll = 0;
+  let transcriptFollow = true;
+  let transcriptLines: StyledText[] = [];
 
   const styled = (...chunks: TextChunk[]): StyledText => new StyledText(chunks);
 
-  const append = (content: string | StyledText, color = colors.text) => {
-    const id = `istat-line-${lineCounter++}`;
-    const value = typeof content === "string" ? styled(fg(color)(content)) : content;
-    transcript.add(
-      new TextRenderable(renderer, {
-        id,
-        content: value,
-        fg: colors.text,
-        width: "100%",
-        wrapMode: "word",
-      })
-    );
-    lineIds.push(id);
-    while (lineIds.length > MAX_TRANSCRIPT_LINES) {
-      const oldest = lineIds.shift();
-      if (oldest) transcript.remove(oldest);
+  const renderTranscript = () => {
+    const total = transcriptLines.length;
+    const visible = Math.max(1, transcriptVisible);
+    const maxScroll = Math.max(0, total - visible);
+    transcriptScroll = Math.min(Math.max(0, transcriptScroll), maxScroll);
+    const start = transcriptScroll;
+    const end = Math.min(total, start + visible);
+    const chunks: TextChunk[] = [];
+    for (let index = start; index < end; index++) {
+      if (index > start) chunks.push(fg(colors.text)("\n"));
+      chunks.push(...transcriptLines[index]!.chunks);
     }
-    transcript.scrollTo(Infinity);
+    transcriptText.content = new StyledText(
+      chunks.length > 0 ? chunks : [fg(colors.text)("")]
+    );
+    transcript.title =
+      total > visible
+        ? ` Session · ${start + 1}-${end}/${total} `
+        : " Session ";
+  };
+
+  const append = (content: string | StyledText, color = colors.text) => {
+    const value =
+      typeof content === "string" ? styled(fg(color)(content)) : content;
+    transcriptLines.push(...wrapStyledText(value, transcriptWidth));
+    if (transcriptLines.length > MAX_TRANSCRIPT_LINES) {
+      transcriptLines = transcriptLines.slice(-MAX_TRANSCRIPT_LINES);
+    }
+    if (transcriptFollow) {
+      transcriptScroll = Math.max(0, transcriptLines.length - transcriptVisible);
+    }
+    renderTranscript();
   };
 
   const clearTranscript = () => {
-    for (const id of lineIds) transcript.remove(id);
-    lineIds.length = 0;
+    transcriptLines = [];
+    transcriptScroll = 0;
+    transcriptFollow = true;
+    renderTranscript();
   };
 
   const updateHeader = () => {
@@ -299,6 +321,23 @@ export async function startReplTui(env: Environment): Promise<void> {
   };
 
   const updateFooter = () => {
+    if (renderer.width < 80) {
+      footerText.content = styled(
+        fg(colors.accent)("↑↓"),
+        fg(colors.muted)(" history · "),
+        fg(colors.accent)("PgUp/PgDn"),
+        fg(colors.muted)(" scroll · "),
+        fg(colors.accent)("F2"),
+        fg(colors.muted)(" chart · "),
+        fg(colors.accent)("F3"),
+        fg(colors.muted)(" side · "),
+        fg(colors.accent)("^L"),
+        fg(colors.muted)(" clear · "),
+        fg(colors.accent)("^C"),
+        fg(colors.muted)(" exit")
+      );
+      return;
+    }
     footerText.content = styled(
       fg(colors.accent)("↑↓"),
       fg(colors.muted)(" history  "),
@@ -319,10 +358,28 @@ export async function startReplTui(env: Environment): Promise<void> {
     const variables = env.getVariables();
     variableCount = variables.size;
     variablesPanel.title = ` Variables (${variables.size}) `;
-    variablesText.content = variablesStyledText(
-      variables,
-      Math.max(12, sidebarWidth - 4)
+
+    const width = Math.max(12, sidebarWidth - 4);
+    const panelHeight = Math.max(
+      3,
+      chartVisible ? bodyHeight - chartHeight - 1 : bodyHeight
     );
+    const maxLines = Math.max(1, panelHeight - 2);
+    const allLines = variableLines(variables, width);
+    let visible = allLines;
+
+    if (allLines.length > maxLines) {
+      if (maxLines > 1) {
+        visible = [
+          ...allLines.slice(0, maxLines - 1),
+          styled(fg(colors.muted)(`… ${allLines.length - (maxLines - 1)} more`)),
+        ];
+      } else {
+        visible = [styled(fg(colors.muted)(`… ${allLines.length} more`))];
+      }
+    }
+
+    variablesText.content = joinStyledLines(visible);
   };
 
   const updateChart = () => {
@@ -358,18 +415,37 @@ export async function startReplTui(env: Environment): Promise<void> {
     sidebar.width = sidebarWidth;
     sidebar.visible = sidebarVisible;
 
-    const bodyHeight = Math.max(6, height - 7);
+    bodyHeight = Math.max(6, height - 7);
     chartHeight = Math.max(
-      5,
+      6,
       Math.min(12, Math.floor(bodyHeight * 0.5), bodyHeight - 5)
     );
     chartPanel.height = chartHeight;
 
+    transcriptVisible = Math.max(1, bodyHeight - 2);
+    const nextTranscriptWidth = Math.max(
+      12,
+      sidebarVisible ? width - sidebarWidth - 7 : width - 6
+    );
+    if (nextTranscriptWidth !== transcriptWidth) {
+      transcriptWidth = nextTranscriptWidth;
+      transcriptLines = transcriptLines.flatMap((line) =>
+        wrapStyledText(line, transcriptWidth)
+      );
+      if (transcriptLines.length > MAX_TRANSCRIPT_LINES) {
+        transcriptLines = transcriptLines.slice(-MAX_TRANSCRIPT_LINES);
+      }
+    }
+    if (transcriptFollow) {
+      transcriptScroll = Math.max(0, transcriptLines.length - transcriptVisible);
+    }
+    renderTranscript();
+
     chartCount = env.getCharts().length;
-    updateHeader();
-    updateFooter();
     updateVariables();
     updateChart();
+    updateHeader();
+    updateFooter();
   };
 
   const showChart = (chart: ChartInfo) => {
@@ -393,6 +469,8 @@ export async function startReplTui(env: Environment): Promise<void> {
     applyLayout();
   };
 
+  applyLayout();
+
   append(
     styled(fg(colors.muted)("Explore data. Calculate boldly. Stay curious."))
   );
@@ -409,7 +487,6 @@ export async function startReplTui(env: Environment): Promise<void> {
     ctrl: boolean;
     preventDefault(): void;
   }) => {
-    if (process.env.ISTAT_TUI_DEBUG) process.stderr.write(`KEY name=${key.name} ctrl=${key.ctrl}\n`);
     const name = key.name.toLowerCase();
 
     if (name === "f2") {
@@ -445,10 +522,21 @@ export async function startReplTui(env: Environment): Promise<void> {
     }
     if (name === "pageup") {
       key.preventDefault();
-      transcript.scrollBy(-1, "viewport");
+      transcriptFollow = false;
+      transcriptScroll = Math.max(
+        0,
+        transcriptScroll - Math.max(1, transcriptVisible - 1)
+      );
+      renderTranscript();
     } else if (name === "pagedown") {
       key.preventDefault();
-      transcript.scrollBy(1, "viewport");
+      const maxScroll = Math.max(0, transcriptLines.length - transcriptVisible);
+      transcriptScroll = Math.min(
+        maxScroll,
+        transcriptScroll + Math.max(1, transcriptVisible - 1)
+      );
+      transcriptFollow = transcriptScroll >= maxScroll;
+      renderTranscript();
     }
   };
   renderer.keyInput.on("keypress", onKeyPress);
@@ -461,7 +549,6 @@ export async function startReplTui(env: Environment): Promise<void> {
   renderer.once("destroy", () => renderer.off("resize", onResize));
 
   input.on(InputRenderableEvents.ENTER, (value) => {
-    if (process.env.ISTAT_TUI_DEBUG) process.stderr.write(`ENTER ${JSON.stringify(value)}\n`);
     const source = value.trim();
     input.value = "";
     historyIndex = history.length;
@@ -470,6 +557,7 @@ export async function startReplTui(env: Environment): Promise<void> {
 
     history.push(source);
     commandCount += 1;
+    transcriptFollow = true;
     append(
       styled(fg(colors.accent)(bold("❯ ")), fg(colors.text)(source))
     );
@@ -591,34 +679,148 @@ function rowsToStyledText(rows: readonly ChartRow[]): StyledText {
   return new StyledText(chunks);
 }
 
-function variablesStyledText(
-  variables: Map<string, any>,
-  width: number
-): StyledText {
-  if (variables.size === 0) {
-    return new StyledText([
-      fg(colors.muted)("No variables yet.\n\n"),
-      fg(colors.muted)("Try "),
-      fg(colors.accent)("x = 1:2:9"),
-      fg(colors.muted)("\nor "),
-      fg(colors.accent)("summary([2, 4, 4, 8])"),
-    ]);
+function wrapStyledText(content: StyledText, width: number): StyledText[] {
+  const limit = Math.max(1, width);
+  const lines: TextChunk[][] = [[]];
+  let column = 0;
+
+  const push = (chunk: TextChunk, text: string) => {
+    if (text.length === 0) return;
+    const line = lines[lines.length - 1]!;
+    const previous = line[line.length - 1];
+    if (
+      previous &&
+      previous.fg === chunk.fg &&
+      previous.bg === chunk.bg &&
+      previous.attributes === chunk.attributes &&
+      previous.link === chunk.link
+    ) {
+      previous.text += text;
+    } else {
+      line.push({ ...chunk, text });
+    }
+  };
+
+  for (const chunk of content.chunks) {
+    const text = chunk.text;
+    let index = 0;
+
+    while (index < text.length) {
+      const char = text[index]!;
+      if (char === "\n") {
+        lines.push([]);
+        column = 0;
+        index += 1;
+        continue;
+      }
+
+      let end = index;
+      const whitespace = char === " " || char === "\t";
+      while (
+        end < text.length &&
+        text[end] !== "\n" &&
+        (text[end] === " " || text[end] === "\t") === whitespace
+      ) {
+        end += 1;
+      }
+
+      let token = text.slice(index, end);
+      index = end;
+
+      if (whitespace) {
+        if (column === 0) continue;
+        if (column + token.length > limit) {
+          lines.push([]);
+          column = 0;
+          continue;
+        }
+        push(chunk, token);
+        column += token.length;
+        continue;
+      }
+
+      if (column > 0 && column + token.length > limit) {
+        lines.push([]);
+        column = 0;
+      }
+
+      while (token.length > 0) {
+        const room = limit - column;
+        if (room <= 0) {
+          lines.push([]);
+          column = 0;
+          continue;
+        }
+        const part = token.slice(0, room);
+        push(chunk, part);
+        column += part.length;
+        token = token.slice(room);
+        if (token.length > 0) {
+          lines.push([]);
+          column = 0;
+        }
+      }
+    }
   }
 
+  return lines.map((line) =>
+    line.length > 0
+      ? new StyledText(line)
+      : new StyledText([fg(colors.text)("")])
+  );
+}
+
+function joinStyledLines(lines: readonly StyledText[]): StyledText {
+  if (lines.length === 0) return new StyledText([fg(colors.text)("")]);
   const chunks: TextChunk[] = [];
-  let index = 0;
-  for (const [name, value] of variables) {
+  lines.forEach((line, index) => {
     if (index > 0) chunks.push(fg(colors.text)("\n"));
-    chunks.push(fg(colors.prompt)(name));
-    chunks.push(fg(colors.muted)(`  ${typeLabel(value)}`));
-    chunks.push(
-      fg(colors.text)(
-        `\n  ${fitText(formatSummary(value), Math.max(8, width - 2))}`
-      )
-    );
-    index += 1;
-  }
+    chunks.push(...line.chunks);
+  });
   return new StyledText(chunks);
+}
+
+function variableLines(
+  variables: Map<string, any>,
+  width: number
+): StyledText[] {
+  if (variables.size === 0) {
+    return [
+      new StyledText([fg(colors.muted)("No variables yet.")]),
+      new StyledText([fg(colors.text)("")]),
+      new StyledText([
+        fg(colors.muted)("Try "),
+        fg(colors.accent)("x = 1:2:9"),
+      ]),
+      new StyledText([
+        fg(colors.muted)("or "),
+        fg(colors.accent)("summary([2, 4, 4, 8])"),
+      ]),
+    ];
+  }
+
+  const lines: StyledText[] = [];
+  for (const [name, value] of variables) {
+    const nameText = fitText(name, Math.max(4, width - 12));
+    const typeText = fitText(
+      typeLabel(value),
+      Math.max(4, width - nameText.length - 2)
+    );
+    lines.push(
+      new StyledText([
+        fg(colors.prompt)(nameText),
+        fg(colors.muted)(`  ${typeText}`),
+      ])
+    );
+    lines.push(
+      new StyledText([
+        fg(colors.text)(
+          `  ${fitText(formatSummary(value), Math.max(8, width - 2))}`
+        ),
+      ])
+    );
+  }
+  return lines;
 }
 
 function typeLabel(value: any): string {
@@ -638,6 +840,10 @@ function formatSummary(value: unknown): string {
   if (Array.isArray(value)) {
     if (value.length <= 6) return `[ ${value.join(", ")} ]`;
     return `[ ${value.slice(0, 3).join(", ")}, …, ${value.slice(-2).join(", ")} ]`;
+  }
+  if (typeof value === "string") {
+    if (value.startsWith("<svg")) return `<svg · ${value.length} chars>`;
+    return value;
   }
   if (typeof value === "object" && value !== null) return JSON.stringify(value);
   return String(value);

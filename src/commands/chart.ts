@@ -35,8 +35,8 @@ export function renderHistogramRows(
     return [[{ text: "No histogram data.", tone: "muted" }]];
   }
 
-  const canvasWidth = Math.max(24, Math.floor(width));
-  const canvasHeight = Math.max(6, Math.floor(height));
+  const canvasWidth = Math.max(16, Math.floor(width));
+  const canvasHeight = Math.max(4, Math.floor(height));
   const rows: ChartRow[] = [];
   const title = chart.title?.trim();
 
@@ -52,12 +52,27 @@ export function renderHistogramRows(
   const plotWidth = Math.max(8, canvasWidth - labelWidth);
   const plotHeight = Math.max(1, canvasHeight - rows.length - 2);
 
+  const binCount = chart.bins.length;
+  const gap = binCount > 1 && plotWidth >= binCount * 2 ? 1 : 0;
+  const barWidth = Math.max(
+    1,
+    Math.floor((plotWidth - gap * (binCount - 1)) / binCount)
+  );
+  const usedWidth = barWidth * binCount + gap * (binCount - 1);
+  const extraWidth = Math.max(0, plotWidth - usedWidth);
+
   const binForColumn: number[] = [];
   for (let column = 0; column < plotWidth; column += 1) {
-    const index = Math.min(
-      chart.bins.length - 1,
-      Math.floor((column / plotWidth) * chart.bins.length)
-    );
+    let index = -1;
+    let cursor = 0;
+    for (let bin = 0; bin < binCount; bin += 1) {
+      const width = barWidth + (bin === binCount - 1 ? extraWidth : 0);
+      if (column >= cursor && column < cursor + width) {
+        index = bin;
+        break;
+      }
+      cursor += width + gap;
+    }
     binForColumn.push(index);
   }
 
@@ -71,6 +86,10 @@ export function renderHistogramRows(
     ];
 
     for (const index of binForColumn) {
+      if (index < 0) {
+        segments.push({ text: " ", tone: "muted" });
+        continue;
+      }
       const bin = chart.bins[index]!;
       const subCells = (bin.count / maxCount) * plotHeight * 8;
       const level = clamp(Math.round(subCells - cellFromBottom * 8), 0, 8);
@@ -110,8 +129,8 @@ export function renderScatterRows(
     return [[{ text: "No scatter data.", tone: "muted" }]];
   }
 
-  const canvasWidth = Math.max(24, Math.floor(width));
-  const canvasHeight = Math.max(6, Math.floor(height));
+  const canvasWidth = Math.max(16, Math.floor(width));
+  const canvasHeight = Math.max(4, Math.floor(height));
   const rows: ChartRow[] = [];
   const title = chart.title?.trim();
 
