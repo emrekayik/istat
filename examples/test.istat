@@ -1,1 +1,3 @@
-(10 + 5) * 2 - 8
+rows = readData("/Users/emre/Documents/src/product/istat/examples/measurements.csv");
+writeData("clean.csv", rows);
+writeJson("summary.json", summary(column(rows, "score")));
