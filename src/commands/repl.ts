@@ -23,9 +23,18 @@ export default defineCommand({
   handler: async () => {
     const env = createEnvironment();
     if (process.stdin.isTTY && process.stdout.isTTY) {
-      const { startReplTui } = await import("./repl-tui");
-      await startReplTui(env);
-      return;
+      try {
+        const { startReplTui } = await import("./repl-tui");
+        await startReplTui(env);
+        return;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(
+          pc.yellow(
+            `iStat could not start the terminal UI (${message}). Falling back to the line REPL.`,
+          ),
+        );
+      }
     }
 
     const rl = createReplInterface();

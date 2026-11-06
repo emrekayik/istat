@@ -21,7 +21,11 @@ const isScriptPath =
   first !== undefined && !first.startsWith("-") && /\.(istat|m)$/i.test(first);
 const isFileFlag = first === "-f" || first === "--file";
 
-if ((isScriptPath || isFileFlag) && argv.length > 0) {
+if (argv.length === 0) {
+  // A bare `istat` invocation should drop straight into the interactive REPL
+  // so users can start typing without knowing the subcommand.
+  await cli.run(["repl"]);
+} else if (isScriptPath || isFileFlag) {
   await cli.run(["run", ...argv]);
 } else {
   await cli.run();

@@ -6,7 +6,8 @@ iStat is run with Bun from the repository root. The package script forwards argu
 bun run istat --help
 ```
 
-The CLI has four commands: `editor`, `eval`, `run`, and `repl`.
+The CLI has four commands: `editor`, `eval`, `run`, and `repl`. Running
+`istat` with no arguments opens the REPL.
 
 ## `editor`
 
@@ -79,8 +80,12 @@ As with `eval`, saved SVG markup is omitted from the normal output, and `--svg` 
 Start a persistent interactive session:
 
 ```sh
+bun run istat
 bun run istat repl
 ```
+
+Running `istat` without a command starts the REPL, so the prompt is available
+immediately. Pass `--help` to print the command list instead.
 
 When launched in a terminal, the REPL opens an OpenTUI screen with a session
 header, a session transcript, a variables sidebar, a chart panel, and an

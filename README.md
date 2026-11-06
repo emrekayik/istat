@@ -20,9 +20,10 @@ Evaluate an expression or a sequence of statements:
 bun run istat eval -i 'x = 1:5; mean(x)'
 ```
 
-Start an interactive session:
+Start an interactive session by running iStat with no arguments (or use the explicit `repl` command):
 
 ```sh
+bun run istat
 bun run istat repl
 ```
 

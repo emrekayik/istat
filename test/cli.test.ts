@@ -5,6 +5,8 @@ import { join } from "node:path";
 
 const root = join(import.meta.dir, "..");
 const tempDir = mkdtempSync(join(tmpdir(), "istat-cli-"));
+const sampleScriptPath = join(tempDir, "sample.istat");
+writeFileSync(sampleScriptPath, "(10 + 5) * 2 - 8\n");
 
 afterAll(() => {
   rmSync(tempDir, { recursive: true, force: true });
@@ -119,7 +121,7 @@ describe("iStat CLI", () => {
     const { stdout, stderr, exitCode } = await runCli([
       "run",
       "-f",
-      "examples/test.istat",
+      sampleScriptPath,
     ]);
 
     expect(exitCode).toBe(0);
@@ -131,24 +133,22 @@ describe("iStat CLI", () => {
   test("runs a script file passed positionally", async () => {
     const { stdout, stderr, exitCode } = await runCli([
       "run",
-      "examples/test.istat",
+      sampleScriptPath,
     ]);
 
     expect(exitCode).toBe(0);
     expect(stderr).toBe("");
-    expect(stdout).toContain("Running Script: examples/test.istat");
+    expect(stdout).toContain(`Running Script: ${sampleScriptPath}`);
     expect(stdout).toContain("22");
     expect(stdout).toContain("Script finished successfully");
   });
 
   test("dispatches a script path directly to the run command", async () => {
-    const { stdout, stderr, exitCode } = await runCli([
-      "examples/test.istat",
-    ]);
+    const { stdout, stderr, exitCode } = await runCli([sampleScriptPath]);
 
     expect(exitCode).toBe(0);
     expect(stderr).toBe("");
-    expect(stdout).toContain("Running Script: examples/test.istat");
+    expect(stdout).toContain(`Running Script: ${sampleScriptPath}`);
     expect(stdout).toContain("22");
     expect(stdout).toContain("Script finished successfully");
   });
@@ -156,12 +156,12 @@ describe("iStat CLI", () => {
   test("dispatches a leading file flag to the run command", async () => {
     const { stdout, stderr, exitCode } = await runCli([
       "-f",
-      "examples/test.istat",
+      sampleScriptPath,
     ]);
 
     expect(exitCode).toBe(0);
     expect(stderr).toBe("");
-    expect(stdout).toContain("Running Script: examples/test.istat");
+    expect(stdout).toContain(`Running Script: ${sampleScriptPath}`);
     expect(stdout).toContain("22");
   });
 
@@ -309,6 +309,20 @@ describe("iStat CLI", () => {
     const runtime = await runCli(["eval", "-i", "unknownFn(2)"]);
     expect(runtime.exitCode).toBe(1);
     expect(runtime.stderr).toContain("Execution Error");
+  });
+
+  test("starts the REPL when no command is given", async () => {
+    const { stdout, stderr, exitCode } = await runCli(
+      [],
+      "x = 2\nx + 3\nexit\n",
+    );
+
+    expect(exitCode).toBe(0);
+    expect(stderr).toBe("");
+    expect(stdout).toContain("istat ❯");
+    expect(stdout).toContain("See you later");
+    expect(stdout).not.toContain("Commands:");
+    expect(stdout).toContain("5");
   });
 
   test("keeps variables between piped REPL commands", async () => {

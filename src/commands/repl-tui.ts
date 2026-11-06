@@ -7,6 +7,7 @@ import {
   bold,
   createCliRenderer,
   fg,
+  type CliRenderer,
   type TextChunk,
 } from "@opentui/core";
 import type { ChartInfo } from "../core/charts";
@@ -51,10 +52,21 @@ const MAX_TRANSCRIPT_LINES = 800;
 export async function startReplTui(env: Environment): Promise<void> {
   const renderer = await createCliRenderer({
     exitOnCtrlC: true,
-    useMouse: false,
+    useMouse: true,
     backgroundColor: colors.background,
   });
 
+  try {
+    await runReplTui(renderer, env);
+  } finally {
+    renderer.destroy();
+  }
+}
+
+async function runReplTui(
+  renderer: CliRenderer,
+  env: Environment,
+): Promise<void> {
   const closed = new Promise<void>((resolve) => {
     renderer.once("destroy", resolve);
   });
@@ -229,7 +241,7 @@ export async function startReplTui(env: Environment): Promise<void> {
       content: "❯",
       fg: colors.prompt,
       flexShrink: 0,
-    })
+    }),
   );
   const input = new InputRenderable(renderer, {
     id: "istat-repl-input",
@@ -302,7 +314,7 @@ export async function startReplTui(env: Environment): Promise<void> {
       chunks.push(...transcriptLines[index]!.chunks);
     }
     transcriptText.content = new StyledText(
-      chunks.length > 0 ? chunks : [fg(colors.text)("")]
+      chunks.length > 0 ? chunks : [fg(colors.text)("")],
     );
     transcript.title =
       total > visible
@@ -318,7 +330,10 @@ export async function startReplTui(env: Environment): Promise<void> {
       transcriptLines = transcriptLines.slice(-MAX_TRANSCRIPT_LINES);
     }
     if (transcriptFollow) {
-      transcriptScroll = Math.max(0, transcriptLines.length - transcriptVisible);
+      transcriptScroll = Math.max(
+        0,
+        transcriptLines.length - transcriptVisible,
+      );
     }
     renderTranscript();
   };
@@ -335,7 +350,7 @@ export async function startReplTui(env: Environment): Promise<void> {
     headerLeft.content = styled(
       bold(fg(colors.accent)("◆ ")),
       bold(fg(colors.text)("iStat")),
-      fg(colors.muted)(compact ? "  REPL" : "  ·  Interactive Statistics Lab")
+      fg(colors.muted)(compact ? "  REPL" : "  ·  Interactive Statistics Lab"),
     );
     headerRight.content = styled(
       fg(colors.muted)("vars "),
@@ -345,7 +360,7 @@ export async function startReplTui(env: Environment): Promise<void> {
       fg(colors.accent)(String(chartCount)),
       fg(colors.border)("  ·  "),
       fg(colors.muted)("cmds "),
-      fg(colors.accent)(String(commandCount))
+      fg(colors.accent)(String(commandCount)),
     );
   };
 
@@ -363,7 +378,7 @@ export async function startReplTui(env: Environment): Promise<void> {
         fg(colors.accent)("F5/F6"),
         fg(colors.muted)(" cycle · "),
         fg(colors.accent)("^C"),
-        fg(colors.muted)(" exit")
+        fg(colors.muted)(" exit"),
       );
       return;
     }
@@ -383,7 +398,7 @@ export async function startReplTui(env: Environment): Promise<void> {
       fg(colors.accent)("Ctrl+L"),
       fg(colors.muted)(" clear  "),
       fg(colors.accent)("Ctrl+C"),
-      fg(colors.muted)(" exit")
+      fg(colors.muted)(" exit"),
     );
   };
 
@@ -395,7 +410,7 @@ export async function startReplTui(env: Environment): Promise<void> {
     const width = Math.max(12, sidebarWidth - 4);
     const panelHeight = Math.max(
       3,
-      chartVisible ? bodyHeight - chartHeight - 1 : bodyHeight
+      chartVisible ? bodyHeight - chartHeight - 1 : bodyHeight,
     );
     const maxLines = Math.max(1, panelHeight - 2);
     const allLines = variableLines(variables, width);
@@ -405,7 +420,9 @@ export async function startReplTui(env: Environment): Promise<void> {
       if (maxLines > 1) {
         visible = [
           ...allLines.slice(0, maxLines - 1),
-          styled(fg(colors.muted)(`… ${allLines.length - (maxLines - 1)} more`)),
+          styled(
+            fg(colors.muted)(`… ${allLines.length - (maxLines - 1)} more`),
+          ),
         ];
       } else {
         visible = [styled(fg(colors.muted)(`… ${allLines.length} more`))];
@@ -424,7 +441,7 @@ export async function startReplTui(env: Environment): Promise<void> {
       const width = Math.max(20, renderer.width - 6);
       const height = Math.max(4, renderer.height - 9);
       fullChartText.content = rowsToStyledText(
-        renderChartRows(activeChart, width, height)
+        renderChartRows(activeChart, width, height),
       );
       const position =
         chartCount > 0 && chartIndex >= 0
@@ -432,7 +449,7 @@ export async function startReplTui(env: Environment): Promise<void> {
           : "";
       fullChartPanel.title = ` ${fitText(
         `${position}${chartTitle(activeChart)} · F4 close`,
-        Math.max(10, renderer.width - 6)
+        Math.max(10, renderer.width - 6),
       )} `;
       return;
     }
@@ -444,7 +461,7 @@ export async function startReplTui(env: Environment): Promise<void> {
         fg(colors.muted)("No chart yet.\n\n"),
         fg(colors.accent)("plotHist([1, 2, 2, 3], 4)"),
         fg(colors.muted)("\nor\n"),
-        fg(colors.accent)("plotLine(y)  ·  bar(values)")
+        fg(colors.accent)("plotLine(y)  ·  bar(values)"),
       );
       chartPanel.title = " Chart ";
       return;
@@ -453,7 +470,7 @@ export async function startReplTui(env: Environment): Promise<void> {
     const width = Math.max(18, sidebarWidth - 4);
     const height = Math.max(4, chartHeight - 2);
     chartText.content = rowsToStyledText(
-      renderChartRows(activeChart, width, height)
+      renderChartRows(activeChart, width, height),
     );
     const position =
       chartCount > 0 && chartIndex >= 0
@@ -461,7 +478,7 @@ export async function startReplTui(env: Environment): Promise<void> {
         : "";
     chartPanel.title = ` ${fitText(
       `${position}${chartTitle(activeChart)}`,
-      Math.max(8, sidebarWidth - 12)
+      Math.max(8, sidebarWidth - 12),
     )} `;
   };
 
@@ -475,7 +492,7 @@ export async function startReplTui(env: Environment): Promise<void> {
     bodyHeight = Math.max(6, height - 7);
     chartHeight = Math.max(
       6,
-      Math.min(12, Math.floor(bodyHeight * 0.5), bodyHeight - 5)
+      Math.min(12, Math.floor(bodyHeight * 0.5), bodyHeight - 5),
     );
     chartPanel.height = chartHeight;
 
@@ -495,19 +512,22 @@ export async function startReplTui(env: Environment): Promise<void> {
     transcriptVisible = Math.max(1, bodyHeight - 2);
     const nextTranscriptWidth = Math.max(
       12,
-      sidebarVisible ? width - sidebarWidth - 7 : width - 6
+      sidebarVisible ? width - sidebarWidth - 7 : width - 6,
     );
     if (nextTranscriptWidth !== transcriptWidth) {
       transcriptWidth = nextTranscriptWidth;
       transcriptLines = transcriptLines.flatMap((line) =>
-        wrapStyledText(line, transcriptWidth)
+        wrapStyledText(line, transcriptWidth),
       );
       if (transcriptLines.length > MAX_TRANSCRIPT_LINES) {
         transcriptLines = transcriptLines.slice(-MAX_TRANSCRIPT_LINES);
       }
     }
     if (transcriptFollow) {
-      transcriptScroll = Math.max(0, transcriptLines.length - transcriptVisible);
+      transcriptScroll = Math.max(
+        0,
+        transcriptLines.length - transcriptVisible,
+      );
     }
     renderTranscript();
 
@@ -532,7 +552,7 @@ export async function startReplTui(env: Environment): Promise<void> {
     if (charts.length === 0) {
       append(
         "No charts yet. Try plotHist([1, 2, 2, 3], 4) or plotLine(y).",
-        colors.muted
+        colors.muted,
       );
       return;
     }
@@ -552,7 +572,7 @@ export async function startReplTui(env: Environment): Promise<void> {
       if (charts.length === 0) {
         append(
           "No charts yet. Try plotHist([1, 2, 2, 3], 4) or plotLine(y).",
-          colors.muted
+          colors.muted,
         );
         return;
       }
@@ -594,14 +614,14 @@ export async function startReplTui(env: Environment): Promise<void> {
   applyLayout();
 
   append(
-    styled(fg(colors.muted)("Explore data. Calculate boldly. Stay curious."))
+    styled(fg(colors.muted)("Explore data. Calculate boldly. Stay curious.")),
   );
   append(
     styled(
       fg(colors.muted)("Variables live in the sidebar. "),
       fg(colors.accent)("help"),
-      fg(colors.muted)(" shows the field guide.")
-    )
+      fg(colors.muted)(" shows the field guide."),
+    ),
   );
 
   const onKeyPress = (key: {
@@ -609,6 +629,10 @@ export async function startReplTui(env: Environment): Promise<void> {
     ctrl: boolean;
     preventDefault(): void;
   }) => {
+    // Keep the prompt usable even if a terminal focus change or an earlier
+    // interaction dropped focus from the input renderable.
+    if (!input.focused) input.focus();
+
     const name = key.name.toLowerCase();
 
     if (name === "f2") {
@@ -652,9 +676,7 @@ export async function startReplTui(env: Environment): Promise<void> {
       key.preventDefault();
       historyIndex += 1;
       input.value =
-        historyIndex === history.length
-          ? draft
-          : (history[historyIndex] ?? "");
+        historyIndex === history.length ? draft : (history[historyIndex] ?? "");
       return;
     }
     if (name === "pageup") {
@@ -662,7 +684,7 @@ export async function startReplTui(env: Environment): Promise<void> {
       transcriptFollow = false;
       transcriptScroll = Math.max(
         0,
-        transcriptScroll - Math.max(1, transcriptVisible - 1)
+        transcriptScroll - Math.max(1, transcriptVisible - 1),
       );
       renderTranscript();
     } else if (name === "pagedown") {
@@ -670,7 +692,7 @@ export async function startReplTui(env: Environment): Promise<void> {
       const maxScroll = Math.max(0, transcriptLines.length - transcriptVisible);
       transcriptScroll = Math.min(
         maxScroll,
-        transcriptScroll + Math.max(1, transcriptVisible - 1)
+        transcriptScroll + Math.max(1, transcriptVisible - 1),
       );
       transcriptFollow = transcriptScroll >= maxScroll;
       renderTranscript();
@@ -678,6 +700,12 @@ export async function startReplTui(env: Environment): Promise<void> {
   };
   renderer.keyInput.on("keypress", onKeyPress);
   renderer.once("destroy", () => renderer.keyInput.off("keypress", onKeyPress));
+
+  const onFocus = () => {
+    input.focus();
+  };
+  renderer.on("focus", onFocus);
+  renderer.once("destroy", () => renderer.off("focus", onFocus));
 
   const onResize = () => {
     applyLayout();
@@ -693,11 +721,11 @@ export async function startReplTui(env: Environment): Promise<void> {
     if (source.length === 0) return;
 
     history.push(source);
+    historyIndex = history.length;
+    draft = "";
     commandCount += 1;
     transcriptFollow = true;
-    append(
-      styled(fg(colors.accent)(bold("❯ ")), fg(colors.text)(source))
-    );
+    append(styled(fg(colors.accent)(bold("❯ ")), fg(colors.text)(source)));
 
     if (source === "exit" || source === "quit") {
       renderer.destroy();
@@ -719,16 +747,16 @@ export async function startReplTui(env: Environment): Promise<void> {
         append(
           styled(
             bold(fg(colors.accent)("Variables")),
-            fg(colors.muted)(`  ${variables.size} in session`)
-          )
+            fg(colors.muted)(`  ${variables.size} in session`),
+          ),
         );
         for (const [name, val] of variables) {
           append(
             styled(
               fg(colors.prompt)(name.padEnd(12)),
               fg(colors.muted)(` ${typeLabel(val)}  `),
-              fg(colors.text)(formatSummary(val))
-            )
+              fg(colors.text)(formatSummary(val)),
+            ),
           );
         }
       }
@@ -756,7 +784,7 @@ export async function startReplTui(env: Environment): Promise<void> {
         if (isSvg(output.value)) {
           append(
             "SVG output generated. Use saveSvg(path, svg) to write it to disk.",
-            colors.muted
+            colors.muted,
           );
           continue;
         }
@@ -766,8 +794,7 @@ export async function startReplTui(env: Environment): Promise<void> {
       const charts = env.getCharts();
       const newChart =
         charts.length > chartsBefore ? charts[charts.length - 1] : undefined;
-      const chart =
-        outputChart ?? newChart ?? env.getChart(result.lastValue);
+      const chart = outputChart ?? newChart ?? env.getChart(result.lastValue);
 
       if (chart) {
         showChart(chart);
@@ -776,8 +803,8 @@ export async function startReplTui(env: Environment): Promise<void> {
             styled(
               fg(colors.success)("◈ "),
               fg(colors.text)(chartTitle(chart)),
-              fg(colors.muted)(" rendered in the chart panel.")
-            )
+              fg(colors.muted)(" rendered in the chart panel."),
+            ),
           );
         }
       } else {
@@ -788,9 +815,9 @@ export async function startReplTui(env: Environment): Promise<void> {
         styled(
           fg(colors.error)("Error: "),
           fg(colors.error)(
-            error instanceof Error ? error.message : String(error)
-          )
-        )
+            error instanceof Error ? error.message : String(error),
+          ),
+        ),
       );
       applyLayout();
     }
@@ -798,11 +825,7 @@ export async function startReplTui(env: Environment): Promise<void> {
 
   applyLayout();
 
-  try {
-    await closed;
-  } finally {
-    renderer.destroy();
-  }
+  await closed;
 }
 
 function rowsToStyledText(rows: readonly ChartRow[]): StyledText {
@@ -903,7 +926,7 @@ function wrapStyledText(content: StyledText, width: number): StyledText[] {
   return lines.map((line) =>
     line.length > 0
       ? new StyledText(line)
-      : new StyledText([fg(colors.text)("")])
+      : new StyledText([fg(colors.text)("")]),
   );
 }
 
@@ -919,7 +942,7 @@ function joinStyledLines(lines: readonly StyledText[]): StyledText {
 
 function variableLines(
   variables: Map<string, any>,
-  width: number
+  width: number,
 ): StyledText[] {
   if (variables.size === 0) {
     return [
@@ -941,20 +964,20 @@ function variableLines(
     const nameText = fitText(name, Math.max(4, width - 12));
     const typeText = fitText(
       typeLabel(value),
-      Math.max(4, width - nameText.length - 2)
+      Math.max(4, width - nameText.length - 2),
     );
     lines.push(
       new StyledText([
         fg(colors.prompt)(nameText),
         fg(colors.muted)(`  ${typeText}`),
-      ])
+      ]),
     );
     lines.push(
       new StyledText([
         fg(colors.text)(
-          `  ${fitText(formatSummary(value), Math.max(8, width - 2))}`
+          `  ${fitText(formatSummary(value), Math.max(8, width - 2))}`,
         ),
-      ])
+      ]),
     );
   }
   return lines;
