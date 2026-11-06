@@ -852,7 +852,7 @@ export function formatValue(val: any, indent = "  "): string {
       const rows = val.map((row: any[]) =>
         `${indent}[ ${row.map((x: any) => (typeof x === "number" ? Number(x.toFixed(4)).toString() : String(x))).join(", ")} ]`
       );
-      return `[\n${rows.join("\n")}\n]`;
+      return `[\n${rows.join(",\n")}\n]`;
     }
     // 1D Vector or list of objects
     const elements = val.map((x) => {

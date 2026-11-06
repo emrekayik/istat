@@ -49,8 +49,19 @@ With `--json`, the saved path is included as an `svg` field and the save confirm
 Execute a script from a file:
 
 ```sh
-bun run istat run -f examples/analysis.istat
+bun run istat run examples/analysis.istat
 ```
+
+The path can be passed positionally, with `-f/--file`, or directly after `istat`:
+
+```sh
+bun run istat run -f examples/analysis.istat
+bun run istat examples/analysis.istat
+```
+
+> `bun run -f examples/analysis.istat` does not reach iStat: Bun parses `-f` before the
+> package script and exits with `Invalid Argument '-f'`. Use one of the commands above
+> (or `bun --silent istat run ...` to hide Bun's script echo).
 
 The command accepts `.istat` and `.m` files. Other extensions produce a warning, but the file is still attempted. Statements without a trailing semicolon are printed. A trailing semicolon suppresses the statement's regular output.
 

@@ -19,15 +19,18 @@ export default defineCommand({
       description: "Save any generated chart SVG to the specified file path",
     }),
   },
-  handler: async ({ flags }) => {
-    if (!flags.file) {
+  handler: async ({ flags, positional }) => {
+    const file = flags.file ?? positional[0];
+    if (!file) {
       console.error(
-        pc.red("❌ Please specify a file path. Example: istat run -f examples/analysis.istat")
+        pc.red(
+          "❌ Please specify a file path. Example: istat run examples/analysis.istat"
+        )
       );
       process.exit(1);
     }
 
-    const filePath = resolve(process.cwd(), flags.file);
+    const filePath = resolve(process.cwd(), file);
     const ext = extname(filePath).toLowerCase();
 
     if (ext !== ".istat" && ext !== ".m") {
@@ -49,7 +52,7 @@ export default defineCommand({
         return;
       }
 
-      console.log(`\n${pc.cyan(pc.bold("📄 Running Script:"))} ${pc.gray(flags.file)}\n`);
+      console.log(`\n${pc.cyan(pc.bold("📄 Running Script:"))} ${pc.gray(file)}\n`);
 
       const env = createEnvironment();
       const result = evaluate(fileContent, env);
@@ -68,7 +71,8 @@ export default defineCommand({
       const outputs = svgPath
         ? result.outputs.filter((out) => !isSvg(out.value))
         : result.outputs;
-      for (const out of outputs) {
+      for (const [index, out] of outputs.entries()) {
+        if (index > 0) console.log("");
         console.log(pc.yellow(out.formatted));
       }
 

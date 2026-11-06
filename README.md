@@ -37,8 +37,19 @@ Studio listens only on `127.0.0.1`; use `--port 0` to choose an available port.
 Run a script file:
 
 ```sh
-bun run istat run -f examples/analysis.istat
+bun run istat run examples/analysis.istat
 ```
+
+The path can also be passed with `-f/--file`, or directly after `istat`:
+
+```sh
+bun run istat run -f examples/analysis.istat
+bun run istat examples/analysis.istat
+```
+
+> `bun run -f examples/analysis.istat` does not reach iStat: Bun parses `-f` before the
+> package script and exits with `Invalid Argument '-f'`. Use one of the commands above
+> (or `bun --silent istat run ...` to hide Bun's script echo).
 
 Import a CSV, XLSX, or JSON file in a script with `readData(path)`. For example, `rows = readData("examples/measurements.csv"); scores = column(rows, "score"); mean(scores)` reads a CSV using its first row as headers.
 

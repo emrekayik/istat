@@ -128,6 +128,53 @@ describe("iStat CLI", () => {
     expect(stdout).toContain("Script finished successfully");
   });
 
+  test("runs a script file passed positionally", async () => {
+    const { stdout, stderr, exitCode } = await runCli([
+      "run",
+      "examples/test.istat",
+    ]);
+
+    expect(exitCode).toBe(0);
+    expect(stderr).toBe("");
+    expect(stdout).toContain("Running Script: examples/test.istat");
+    expect(stdout).toContain("22");
+    expect(stdout).toContain("Script finished successfully");
+  });
+
+  test("dispatches a script path directly to the run command", async () => {
+    const { stdout, stderr, exitCode } = await runCli([
+      "examples/test.istat",
+    ]);
+
+    expect(exitCode).toBe(0);
+    expect(stderr).toBe("");
+    expect(stdout).toContain("Running Script: examples/test.istat");
+    expect(stdout).toContain("22");
+    expect(stdout).toContain("Script finished successfully");
+  });
+
+  test("dispatches a leading file flag to the run command", async () => {
+    const { stdout, stderr, exitCode } = await runCli([
+      "-f",
+      "examples/test.istat",
+    ]);
+
+    expect(exitCode).toBe(0);
+    expect(stderr).toBe("");
+    expect(stdout).toContain("Running Script: examples/test.istat");
+    expect(stdout).toContain("22");
+  });
+
+  test("separates script results with blank lines", async () => {
+    const scriptPath = join(tempDir, "blocks.istat");
+    writeFileSync(scriptPath, "a = 1\nb = 2\n");
+
+    const { stdout, exitCode } = await runCli(["run", scriptPath]);
+
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain("a =\n1\n\nb =\n2");
+  });
+
   test("warns about unexpected script extensions but still runs the file", async () => {
     const scriptPath = join(tempDir, "script.txt");
     writeFileSync(scriptPath, "1 + 1\n");

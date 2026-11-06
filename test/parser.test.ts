@@ -78,6 +78,15 @@ describe("iStat Language - Parser & Evaluator", () => {
     expect(env.get("inverseA")[0][0]).toBeCloseTo(-2);
   });
 
+  it("formats matrix rows with commas for readability", () => {
+    const env = createEnvironment();
+    const result = evaluate("A = [1 2; 3 4]", env);
+
+    expect(result.outputs[0]!.formatted).toBe(
+      "A =\n[\n  [ 1, 2 ],\n  [ 3, 4 ]\n]"
+    );
+  });
+
   it("provides probability and descriptive-statistics built-ins", () => {
     const env = createEnvironment();
     evaluate(

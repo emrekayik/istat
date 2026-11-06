@@ -15,4 +15,14 @@ cli.command(editorCommand);
 cli.command(replCommand);
 cli.command(runCommand);
 
-await cli.run();
+const argv = process.argv.slice(2);
+const first = argv[0];
+const isScriptPath =
+  first !== undefined && !first.startsWith("-") && /\.(istat|m)$/i.test(first);
+const isFileFlag = first === "-f" || first === "--file";
+
+if ((isScriptPath || isFileFlag) && argv.length > 0) {
+  await cli.run(["run", ...argv]);
+} else {
+  await cli.run();
+}
